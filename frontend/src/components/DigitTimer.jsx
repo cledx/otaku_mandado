@@ -10,8 +10,8 @@ function DigitPair({ value }) {
 
 function TimerDigit({ d }) {
   return (
-    <div className="flex h-14 min-w-[2.25rem] items-center justify-center rounded-lg bg-white px-2 shadow-md sm:h-20 sm:min-w-[3.25rem] sm:rounded-xl sm:px-3">
-      <span className="font-['Orbitron',sans-serif] text-3xl font-bold leading-none text-neutral-900 tabular-nums sm:text-5xl">
+    <div className="flex h-14 min-w-[2.25rem] items-center justify-center rounded-lg bg-brand-lavender px-2 shadow-md ring-1 ring-brand-thistle/60 sm:h-20 sm:min-w-[3.25rem] sm:rounded-xl sm:px-3">
+      <span className="font-['Orbitron',sans-serif] text-3xl font-bold leading-none text-brand-shadow tabular-nums sm:text-5xl">
         {d}
       </span>
     </div>
@@ -21,8 +21,8 @@ function TimerDigit({ d }) {
 function Colon() {
   return (
     <div className="flex flex-col justify-center gap-1.5 px-0.5 sm:gap-2 sm:px-1" aria-hidden>
-      <span className="size-1.5 rounded-full bg-neutral-900 sm:size-2" />
-      <span className="size-1.5 rounded-full bg-neutral-900 sm:size-2" />
+      <span className="size-1.5 rounded-full bg-brand-shadow sm:size-2" />
+      <span className="size-1.5 rounded-full bg-brand-shadow sm:size-2" />
     </div>
   )
 }
