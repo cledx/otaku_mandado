@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   get "me", to: "current_user#show"
 
   namespace :v1, defaults: { format: :json } do
+    get "landing_sale", to: "landing_sales#show"
+
     resources :sales, only: %i[show create edit update destroy] do
       member do
         delete :delete, action: :destroy
