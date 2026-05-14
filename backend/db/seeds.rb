@@ -11,21 +11,3 @@ sale.save!
 
 # Recreate items so re-running db:seed keeps the same two Cloudinary fixtures.
 sale.items.destroy_all
-
-Item.create!(
-  sale: sale,
-  name: "",
-  description: "",
-  price: nil,
-  status: "available",
-  image: ["test_image_figure_2_ikos7z"]
-)
-
-Item.create!(
-  sale: sale,
-  name: "",
-  description: "",
-  price: nil,
-  status: "available",
-  image: ["test_image_figure_1_yyskid"]
-)
