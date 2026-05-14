@@ -9,7 +9,6 @@ module Ai
       string :name, description: "The name of the item or N/A if not found"
       string :brand, description: "The brand of the item or N/A if not found"
       string :description, description: "The description of the item in Spanish or N/A if not found"
-      string :status, description: "The status of the item or N/A if not found"
       boolean :error, description: "Whether there was an error processing the image or false if no error"
       string :error_message, description: "The error message if there was an error processing the image or N/A if no error"
     end
@@ -52,12 +51,11 @@ module Ai
         item.name = response.name
         item.brand = response.brand
         item.description = response.description
-        item.status = response.status
-        item.error = response.error
-        item.error_message = response.error_message
+        error = response.error
+        error_message = response.error_message
         item.save
-        if item.error
-          errors << { item_id: item.id, errors: item.error_message }
+        if error
+          errors << { item_id: item.id, errors: error_message }
         end
       end
 
