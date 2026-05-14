@@ -3,7 +3,7 @@
 class Item < ApplicationRecord
   include SoftDeletable
 
-  STATUSES = %w[reserved purchased].freeze
+  STATUSES = %w[reserved purchased available].freeze
   MAX_IMAGES = 2
 
   belongs_to :sale

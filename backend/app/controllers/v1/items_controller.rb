@@ -13,10 +13,11 @@ module V1
       render json: { data: @item.to_api_hash }
     end
 
+    # POST body: { "public_ids": ["folder/asset", ...] } — Cloudinary public_ids only (no URLs).
     def create
       result = Ai::ProcessImageMetadataService.new(
         sale: @sale,
-        metadata: params.dig(:item, :image)
+        metadata: public_ids_metadata
       ).call
 
       if result.success?
@@ -47,6 +48,13 @@ module V1
 
     def set_item
       @item = @sale.items.kept.find(params[:id])
+    end
+
+    def public_ids_metadata
+      permitted = params.permit(public_ids: [])
+      {
+        public_ids: Array(permitted[:public_ids]).filter_map { |id| id.to_s.strip.presence }.uniq
+      }
     end
 
   end
