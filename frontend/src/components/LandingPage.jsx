@@ -72,18 +72,27 @@ export default function LandingPage() {
 
   const showTimer = Boolean(payload && targetMs != null && !error)
 
+  const bgLayers = {
+    backgroundImage:
+      "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.45)), url('/assets/backgrounds/landing_page.png')",
+    backgroundSize: '100% 100%, 100% 100%',
+    backgroundPosition: 'center, center',
+    backgroundRepeat: 'no-repeat, no-repeat',
+  }
+
   return (
     <div className="relative min-h-svh w-full bg-neutral-900 text-neutral-900">
       <Navbar />
 
-      <main className="relative flex min-h-svh w-full flex-col pt-14">
-        <div
-          className="relative flex min-h-[70vh] flex-1 flex-col items-center justify-center bg-cover bg-center px-4 pb-48 pt-10 sm:min-h-[75vh] sm:px-6 sm:pb-56 sm:pt-16"
-          style={{
-            backgroundImage:
-              "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.45)), url('/assets/backgrounds/landing_page.png')",
-          }}
-        >
+      {/* Viewport-locked background: stretches to fill the window and does not scroll */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 min-h-svh w-full"
+        style={bgLayers}
+      />
+
+      <main className="relative z-10 flex min-h-svh w-full flex-col pt-14">
+        <div className="relative flex min-h-[70vh] flex-1 flex-col items-center justify-center px-4 pb-48 pt-10 sm:min-h-[75vh] sm:px-6 sm:pb-56 sm:pt-16">
           <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
             <h1 className="mb-6 max-w-xl font-sans text-lg font-semibold tracking-wide text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-xl">
               {error
@@ -117,7 +126,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <section className="relative z-10 -mt-36 mx-auto mb-10 w-full max-w-5xl px-4 sm:-mt-44 sm:mb-14 sm:px-6">
+        <section className="relative -mt-36 mx-auto mb-10 w-full max-w-5xl px-4 sm:-mt-44 sm:mb-14 sm:px-6">
           <div className="rounded-2xl border border-pink-300/40 bg-pink-300/50 p-4 shadow-xl backdrop-blur-sm sm:rounded-3xl sm:p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2 md:gap-6">
               <article className="rounded-xl bg-white/95 p-6 text-left shadow-md sm:p-8">
