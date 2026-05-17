@@ -74,6 +74,7 @@ export default function LandingPage() {
       : 'Time Until Next Drop:'
 
   const showTimer = Boolean(payload && targetMs != null && !error)
+  const showDropLink = showTimer && payload?.phase === 'during'
   const dropHref = payload?.sale?.id != null ? `#sale-${payload.sale.id}` : '#'
 
   return (
@@ -96,7 +97,7 @@ export default function LandingPage() {
             {showTimer ? (
               <>
                 <DigitTimer hours={hours} minutes={minutes} seconds={seconds} />
-                <PillLink to={dropHref}>Current Drop</PillLink>
+                {showDropLink ? <PillLink to={dropHref}>Current Drop</PillLink> : null}
               </>
             ) : !error ? (
               <p className="max-w-md text-sm text-brand-alabaster drop-shadow-md">

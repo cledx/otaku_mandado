@@ -1,3 +1,7 @@
+/**
+ * Full-viewport background image with a dark gradient overlay.
+ * @param {string} [imageUrl] — path under public/, e.g. landing_page.png or sales.png
+ */
 export default function PageBackground({
   imageUrl = '/assets/backgrounds/landing_page.png',
   className = '',

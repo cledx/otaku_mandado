@@ -21,6 +21,38 @@ class Sale < ApplicationRecord
     starts_at + duration.to_f.hours
   end
 
+  # before | during | after — drives countdown UI on landing and sale pages.
+  def phase_at(time = Time.current)
+    sa = starts_at
+    ea = ends_at
+    return nil unless sa && ea
+
+    if time < sa
+      "before"
+    elsif time < ea
+      "during"
+    else
+      "after"
+    end
+  end
+
+  # Shared JSON timing block for landing_sale and sale_pages API responses.
+  def timing_payload(time = Time.current)
+    sa = starts_at
+    ea = ends_at
+    {
+      phase: phase_at(time),
+      starts_at: sa&.iso8601(3),
+      ends_at: ea&.iso8601(3)
+    }
+  end
+
+  # Resolves which sale backs the navbar "Current Sale" link for the given role.
+  def self.current_for_nav(role)
+    predicate = role == "admin" ? :admin_current_nav? : :client_current_nav?
+    kept.order(:start_time, :id).find { |sale| public_send(predicate, sale) }
+  end
+
   def self.ongoing
     kept.order(:start_time, :id).find { |sale| active_now?(sale) }
   end

@@ -17,6 +17,14 @@ export async function fetchLandingSale() {
   return (await res.json()).data
 }
 
+/** Public drop page: sale + items + phase/timing (GET /v1/sale_pages/:id). */
+export async function fetchSalePage(id) {
+  const res = await fetch(`${API_BASE}/v1/sale_pages/${id}`)
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body.error || `sale_page ${res.status}`)
+  return body.data
+}
+
 async function authFetch(path) {
   const token = getAuthToken()
   if (!token) throw new Error('Not signed in')

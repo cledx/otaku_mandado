@@ -10,28 +10,9 @@ module V1
 
     private
 
-    # phase: before | during | after — drives landing UI state.
+    # Sale metadata only; items are loaded on the dedicated sale page endpoint.
     def landing_payload(sale)
-      sa = sale.starts_at
-      ea = sale.ends_at
-      now = Time.current
-      phase =
-        if sa && ea
-          if now < sa
-            "before"
-          elsif now < ea
-            "during"
-          else
-            "after"
-          end
-        end
-
-      {
-        phase: phase,
-        starts_at: sa&.iso8601(3),
-        ends_at: ea&.iso8601(3),
-        sale: sale.to_api_hash
-      }
+      sale.timing_payload.merge(sale: sale.to_api_hash)
     end
   end
 end
