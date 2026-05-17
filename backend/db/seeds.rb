@@ -3,12 +3,21 @@
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
 # Fixture sale for local AI/item upload testing (see ProcessImageMetadataService).
-SEED_SALE_NAME = "[seed] ProcessImageMetadataService fixture sale".freeze
 
-sale = Sale.find_or_initialize_by(name: SEED_SALE_NAME)
+Sale.destroy_all
+Item.destroy_all
+
+sale = Sale.new(name: "Seed Sale")
 sale.start_time = 2.days.from_now.to_date
 sale.duration = 3.0 # interpreted as hours in product copy; adjust if your app uses another unit
 sale.save!
 
-# Recreate items so re-running db:seed keeps the same two Cloudinary fixtures.
-sale.items.destroy_all
+[
+  ["admin@example.com", "admin"],
+  ["client@example.com", "client"],
+].each do |email, role|
+  user = User.find_or_initialize_by(email: email)
+  user.password = "password" if user.new_record?
+  user.role = role
+  user.save!
+end
