@@ -1,5 +1,10 @@
 Rails.application.routes.draw do
-  devise_for :users, defaults: { format: :json }
+  devise_for :users,
+    defaults: { format: :json },
+    controllers: {
+      sessions: "users/sessions",
+      registrations: "users/registrations"
+    }
 
   get "me", to: "current_user#show"
 

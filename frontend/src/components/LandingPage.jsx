@@ -120,7 +120,7 @@ export default function LandingPage() {
               </>
             ) : !error ? (
               <p className="max-w-md text-sm text-brand-alabaster drop-shadow-md">
-                Check back soon — there is no sale scheduled in the next window.
+                There is no sale currently scheduled. Check back soon!
               </p>
             ) : null}
           </div>
