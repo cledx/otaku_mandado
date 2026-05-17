@@ -12,6 +12,7 @@ sale.start_time = 2.days.from_now.to_date
 sale.duration = 3.0 # interpreted as hours in product copy; adjust if your app uses another unit
 sale.save!
 
+# This will be the persistent sale that is used for items that are not part of a sale and always available.
 store = Sale.find_or_initialize_by(name: "Store")
 
 
