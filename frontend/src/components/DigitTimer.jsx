@@ -42,11 +42,19 @@ function Colon() {
 /**
  * HH:MM:SS display for landing and sale pages.
  * @param {'landing'|'drop'} [variant]
+ * @param {'center'|'start'} [align]
  */
-export default function DigitTimer({ hours, minutes, seconds, variant = 'landing' }) {
+export default function DigitTimer({
+  hours,
+  minutes,
+  seconds,
+  variant = 'landing',
+  align = 'center',
+}) {
+  const justify = align === 'start' ? 'justify-start' : 'justify-center'
   return (
     <div
-      className="flex items-center justify-center gap-1 sm:gap-2"
+      className={`flex items-center gap-1 sm:gap-2 ${justify}`}
       role="timer"
       aria-live="polite"
     >

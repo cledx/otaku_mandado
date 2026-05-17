@@ -131,14 +131,14 @@ export default function SalePage({ saleId, mode = 'id' }) {
       <PageBackground imageUrl={SALE_BACKGROUND} />
 
       {/* Drop header: badge + countdown (Figma header strip) */}
-      <header className="relative z-10 border-b border-brand-thistle/80 bg-brand-thistle/45 pt-16 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-8 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-6 sm:px-6 sm:py-10">
+      <header className="relative z-10 border-b border-brand-thistle/80 bg-brand-thistle/45 pt-10 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-8 sm:flex-row sm:flex-wrap sm:gap-6 sm:px-6 sm:py-10">
           <span className="rounded-2xl border-[3px] border-brand-shadow bg-white px-6 py-2 text-lg font-semibold tracking-wide sm:text-xl">
             {badge}
           </span>
 
-          <div className="flex flex-col items-center gap-3 sm:items-start">
-            <p className="text-center text-sm font-medium sm:text-base">
+          <div className="flex flex-col items-start gap-3">
+            <p className="text-left text-sm font-medium sm:text-base">
               {resolveError || loadError
                 ? 'Drop unavailable'
                 : showTimer
