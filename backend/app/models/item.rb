@@ -12,6 +12,7 @@ class Item < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
   before_validation :normalize_image_public_ids
+  before_save :sync_mx_price_from_price, if: :sync_mx_price_from_price?
   validate :validate_image_public_ids
 
   # `image` JSONB: up to 2 Cloudinary public_id strings, e.g. ["sale/abc", "sale/def"].
@@ -40,6 +41,7 @@ class Item < ApplicationRecord
       image: image,
       image_urls: image_urls,
       price: price,
+      mx_price: mx_price,
       description: description,
       status: status,
       deleted_at: deleted_at,
@@ -49,6 +51,22 @@ class Item < ApplicationRecord
   end
 
   private
+
+  def sync_mx_price_from_price?
+    will_save_change_to_price?
+  end
+
+  def sync_mx_price_from_price
+    if price.blank?
+      self.mx_price = nil
+      return
+    end
+
+    self.mx_price = Currency::JpyToMxnConverter.convert_yen(price)
+  rescue Currency::JpyToMxnConverter::RateUnavailable => e
+    errors.add(:price, "could not convert to Mexican pesos: #{e.message}")
+    throw(:abort)
+  end
 
   def normalize_image_public_ids
     return unless image.is_a?(Array)

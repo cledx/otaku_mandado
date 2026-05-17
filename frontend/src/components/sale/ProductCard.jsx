@@ -18,12 +18,17 @@ function ImagePlaceholder() {
   )
 }
 
-/** Formats API price for display; falls back to $0 when missing. */
-function formatPrice(price) {
-  if (price == null || price === '') return '$0'
-  const n = Number(price)
-  if (Number.isNaN(n)) return String(price)
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+/** Formats mx_price (MXN, rounded on the server) for display. */
+function formatMxPrice(mxPrice) {
+  if (mxPrice == null || mxPrice === '') return '$0'
+  const n = Number(mxPrice)
+  if (Number.isNaN(n)) return String(mxPrice)
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(n)
 }
 
 const STATUS_PILL = {
@@ -50,7 +55,7 @@ function StatusPill({ status }) {
 
 /**
  * Single product tile on the sale (drop) page grid.
- * @param {{ item: { id: number, name?: string, price?: number, description?: string, image_urls?: string[], status?: string } }} props
+ * @param {{ item: { id: number, name?: string, mx_price?: number, description?: string, image_urls?: string[], status?: string } }} props
  */
 export default function ProductCard({ item }) {
   const imageUrl = item.image_urls?.[0]
@@ -73,7 +78,7 @@ export default function ProductCard({ item }) {
       <div className="mt-2">
         <StatusPill status={item.status} />
       </div>
-      <p className="mt-2 text-lg font-bold text-brand-shadow">{formatPrice(item.price)}</p>
+      <p className="mt-2 text-lg font-bold text-brand-shadow">{formatMxPrice(item.mx_price)}</p>
       <p className="mt-1 line-clamp-3 text-sm text-brand-shadow/75">
         {item.description || 'No description yet.'}
       </p>

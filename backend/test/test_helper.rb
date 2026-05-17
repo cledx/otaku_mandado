@@ -11,6 +11,13 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    def with_stubbed_jpy_to_mxn(convert_yen_impl)
+      singleton = class << Currency::JpyToMxnConverter; self; end
+      original = singleton.instance_method(:convert_yen)
+      singleton.define_method(:convert_yen, convert_yen_impl)
+      yield
+    ensure
+      singleton.define_method(:convert_yen, original)
+    end
   end
 end

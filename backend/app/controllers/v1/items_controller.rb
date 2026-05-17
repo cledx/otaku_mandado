@@ -58,5 +58,15 @@ module V1
       }
     end
 
+    def item_params
+      params.require(:item).permit(
+        :name,
+        :brand,
+        :description,
+        :price,
+        :status,
+        image: []
+      )
+    end
   end
 end
