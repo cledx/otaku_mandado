@@ -25,16 +25,34 @@ export async function fetchSalePage(id) {
   return body.data
 }
 
-async function authFetch(path) {
+async function authFetch(path, options = {}) {
   const token = getAuthToken()
   if (!token) throw new Error('Not signed in')
 
+  const { method = 'GET', body } = options
+  const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` }
+  if (body != null) headers['Content-Type'] = 'application/json'
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    method,
+    headers,
+    body: body != null ? JSON.stringify(body) : undefined,
   })
-  const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body.error || res.statusText || `Request failed (${res.status})`)
-  return body.data
+  const parsed = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const msg =
+      parsed.error ||
+      (Array.isArray(parsed.errors) ? parsed.errors.join(', ') : null) ||
+      res.statusText ||
+      `Request failed (${res.status})`
+    throw new Error(msg)
+  }
+  return parsed.data
+}
+
+/** Soft-deletes an item nested under a sale (admin). */
+export function deleteItem(saleId, itemId) {
+  return authFetch(`/v1/sales/${saleId}/items/${itemId}`, { method: 'DELETE' })
 }
 
 export function fetchNavContext() {

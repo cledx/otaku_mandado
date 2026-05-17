@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { deleteItem } from '../../api'
+import ConfirmDialog from '../ui/ConfirmDialog'
+
 /** Gray placeholder when an item has no Cloudinary image yet. */
 function ImagePlaceholder() {
   return (
@@ -15,6 +19,15 @@ function ImagePlaceholder() {
         <path d="M3 16l5-5 4 4 3-3 6 6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M3 6h18M8 6V4h8v2M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" strokeLinecap="round" />
+      <path d="M10 11v6M14 11v6" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -55,36 +68,94 @@ function StatusPill({ status }) {
 
 /**
  * Single product tile on the sale (drop) page grid.
- * @param {{ item: { id: number, name?: string, brand?: string, mx_price?: number, description?: string, image_urls?: string[], status?: string } }} props
+ * @param {{ item: object, admin?: boolean, saleId?: string, onDeleted?: (itemId: number) => void }} props
  */
-export default function ProductCard({ item }) {
+export default function ProductCard({ item, admin = false, saleId, onDeleted }) {
   const imageUrl = item.image_urls?.[0]
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+
+  const showDelete = admin && saleId != null
+
+  const handleConfirmDelete = async () => {
+    setDeleteError(null)
+    setDeleting(true)
+    try {
+      await deleteItem(saleId, item.id)
+      setConfirmOpen(false)
+      onDeleted?.(item.id)
+    } catch (e) {
+      setDeleteError(e.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl bg-white p-3 shadow-sm sm:p-4">
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={item.name || 'Product'}
-          className="aspect-square w-full rounded-lg object-cover"
-        />
-      ) : (
-        <ImagePlaceholder />
-      )}
+    <>
+      <article className="relative flex flex-col overflow-hidden rounded-2xl bg-white p-3 shadow-sm sm:p-4">
+        <div className="relative">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.name || 'Product'}
+              className="aspect-square w-full rounded-lg object-cover"
+            />
+          ) : (
+            <ImagePlaceholder />
+          )}
+          {showDelete ? (
+            <button
+              type="button"
+              aria-label={`Delete ${item.name || 'item'}`}
+              onClick={() => {
+                setDeleteError(null)
+                setConfirmOpen(true)
+              }}
+              className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full border border-brand-thistle/80 bg-white/95 text-brand-dusty shadow-sm transition hover:border-brand-dusty hover:bg-brand-lavender hover:text-brand-shadow"
+            >
+              <DeleteIcon />
+            </button>
+          ) : null}
+        </div>
 
-      <h2 className="mt-3 truncate text-base font-medium text-brand-shadow">
-        {item.name || 'Untitled'}
-      </h2>
-      {item.brand ? (
-        <p className="mt-0.5 truncate text-sm text-brand-shadow/65">{item.brand}</p>
-      ) : null}
-      <div className="mt-2">
-        <StatusPill status={item.status} />
-      </div>
-      <p className="mt-2 text-lg font-bold text-brand-shadow">{formatMxPrice(item.mx_price)}</p>
-      <p className="mt-1 line-clamp-3 text-sm text-brand-shadow/75">
-        {item.description || 'No description yet.'}
-      </p>
-    </article>
+        <h2 className="mt-3 truncate text-base font-medium text-brand-shadow">
+          {item.name || 'Untitled'}
+        </h2>
+        {item.brand ? (
+          <p className="mt-0.5 truncate text-sm text-brand-shadow/65">{item.brand}</p>
+        ) : null}
+        <div className="mt-2">
+          <StatusPill status={item.status} />
+        </div>
+        <p className="mt-2 text-lg font-bold text-brand-shadow">{formatMxPrice(item.mx_price)}</p>
+        <p className="mt-1 line-clamp-3 text-sm text-brand-shadow/75">
+          {item.description || 'No description yet.'}
+        </p>
+        {deleteError && !confirmOpen ? (
+          <p className="mt-2 text-xs text-brand-dusty">{deleteError}</p>
+        ) : null}
+      </article>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete item?"
+        message={
+          deleteError
+            ? `${deleteError} Try again, or cancel to close.`
+            : `Remove “${item.name || 'this item'}” from the sale? This cannot be undone.`
+        }
+        confirmLabel="Delete"
+        confirming={deleting}
+        onClose={() => {
+          if (!deleting) {
+            setConfirmOpen(false)
+            setDeleteError(null)
+          }
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+      />
+    </>
   )
 }

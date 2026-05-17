@@ -116,7 +116,7 @@ class Sale < ApplicationRecord
       updated_at: updated_at
     }
     if include_items
-      h[:items] = items.order(:id).map(&:to_api_hash)
+      h[:items] = items.kept.order(:id).map(&:to_api_hash)
     end
     h
   end

@@ -32,10 +32,46 @@ export default function SalePage({ saleId, mode = 'id' }) {
   const [resolveError, setResolveError] = useState(null)
   const [payload, setPayload] = useState(null)
   const [loadError, setLoadError] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
   // Public hash routes pass saleId directly; navbar routes resolve from nav_context.
   const resolvedId = mode === 'id' ? saleId : navResolvedId
+
+  // Show delete controls when the signed-in user is an admin.
+  useEffect(() => {
+    if (!getAuthToken()) {
+      setIsAdmin(false)
+      return
+    }
+
+    let cancelled = false
+    const loadRole = async () => {
+      try {
+        const ctx = await fetchNavContext()
+        if (!cancelled) setIsAdmin(ctx.role === 'admin')
+      } catch {
+        if (!cancelled) setIsAdmin(false)
+      }
+    }
+    void loadRole()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleItemDeleted = (itemId) => {
+    setPayload((prev) => {
+      if (!prev?.sale?.items) return prev
+      return {
+        ...prev,
+        sale: {
+          ...prev.sale,
+          items: prev.sale.items.filter((item) => item.id !== itemId),
+        },
+      }
+    })
+  }
 
   // #current-sale and #upcoming-sale: map nav_context booleans to a concrete sale id.
   useEffect(() => {
@@ -167,7 +203,12 @@ export default function SalePage({ saleId, mode = 'id' }) {
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
             {items.map((item) => (
               <li key={item.id}>
-                <ProductCard item={item} />
+                <ProductCard
+                  item={item}
+                  admin={isAdmin}
+                  saleId={resolvedId}
+                  onDeleted={handleItemDeleted}
+                />
               </li>
             ))}
           </ul>
