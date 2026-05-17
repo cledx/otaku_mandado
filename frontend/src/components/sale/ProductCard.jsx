@@ -55,7 +55,7 @@ function StatusPill({ status }) {
 
 /**
  * Single product tile on the sale (drop) page grid.
- * @param {{ item: { id: number, name?: string, mx_price?: number, description?: string, image_urls?: string[], status?: string } }} props
+ * @param {{ item: { id: number, name?: string, brand?: string, mx_price?: number, description?: string, image_urls?: string[], status?: string } }} props
  */
 export default function ProductCard({ item }) {
   const imageUrl = item.image_urls?.[0]
@@ -75,6 +75,9 @@ export default function ProductCard({ item }) {
       <h2 className="mt-3 truncate text-base font-medium text-brand-shadow">
         {item.name || 'Untitled'}
       </h2>
+      {item.brand ? (
+        <p className="mt-0.5 truncate text-sm text-brand-shadow/65">{item.brand}</p>
+      ) : null}
       <div className="mt-2">
         <StatusPill status={item.status} />
       </div>
