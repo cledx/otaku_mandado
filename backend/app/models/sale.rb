@@ -21,6 +21,41 @@ class Sale < ApplicationRecord
     starts_at + duration.to_f.hours
   end
 
+  def self.ongoing
+    kept.order(:start_time, :id).find { |sale| active_now?(sale) }
+  end
+
+  def self.next_scheduled
+    kept.order(:start_time, :id).find do |sale|
+      sa = sale.starts_at
+      sa && sa > Time.current
+    end
+  end
+
+  def self.active_now?(sale)
+    sa = sale.starts_at
+    ea = sale.ends_at
+    sa && ea && Time.current >= sa && Time.current < ea
+  end
+
+  def self.client_current_nav?(sale)
+    sa = sale.starts_at
+    ea = sale.ends_at
+    return false unless sa && ea
+
+    now = Time.current
+    now >= sa - 1.hour && now < ea
+  end
+
+  def self.admin_current_nav?(sale)
+    sa = sale.starts_at
+    ea = sale.ends_at
+    return false unless sa && ea
+
+    now = Time.current
+    now >= sa - 1.hour && now <= ea + 1.hour
+  end
+
   # Prefer the in-progress drop; otherwise the first sale whose start is after (now - 5 hours).
   def self.next_for_landing
     sales = kept.order(:start_time, :id).to_a

@@ -2,23 +2,27 @@ import { useCallback, useEffect, useState } from 'react'
 import { getAuthToken, logout } from '../../api'
 import LoginModal from '../LoginModal'
 import NavbarLink from './NavbarLink'
+import useNavbarNav from './useNavbarNav'
 
 const SIGNED_IN_VISIBLE_MS = 5000
 const SIGNED_IN_FADE_MS = 500
 
-/**
- * @param {{ to: string, text: string }[]} [links] - optional nav routes
- */
-export default function Navbar({ links = [] }) {
+export default function Navbar() {
   const [loginOpen, setLoginOpen] = useState(false)
   const [signedIn, setSignedIn] = useState(() => Boolean(getAuthToken()))
-  const [signedInLabel, setSignedInLabel] = useState('hidden') // hidden | visible | fading
+  const [signedInLabel, setSignedInLabel] = useState('hidden')
   const [loggingOut, setLoggingOut] = useState(false)
+  const { links, applyUser } = useNavbarNav(signedIn)
+
   const closeLogin = useCallback(() => setLoginOpen(false), [])
-  const handleLoginSuccess = useCallback(() => {
-    setSignedIn(true)
-    setSignedInLabel('visible')
-  }, [])
+  const handleLoginSuccess = useCallback(
+    (user) => {
+      setSignedIn(true)
+      setSignedInLabel('visible')
+      applyUser(user)
+    },
+    [applyUser],
+  )
 
   useEffect(() => {
     if (signedInLabel !== 'visible') return
@@ -51,11 +55,7 @@ export default function Navbar({ links = [] }) {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 border-b border-brand-thistle/60 bg-brand-lavender/92 shadow-[0_1px_0_rgba(45,45,52,0.06)] backdrop-blur-md">
-        <nav className="mx-auto flex max-w-6xl items-center justify-end gap-4 px-4 py-3 sm:px-6">
-          {links.map(({ to, text }) => (
-            <NavbarLink key={to} to={to} text={text} />
-          ))}
-
+        <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
           {signedIn ? (
             <>
               {signedInLabel !== 'hidden' ? (
@@ -68,8 +68,13 @@ export default function Navbar({ links = [] }) {
                   Signed in
                 </span>
               ) : null}
+
+              {links.map(({ to, text }) => (
+                <NavbarLink key={text} to={to} text={text} />
+              ))}
+
               <NavbarLink
-                text={loggingOut ? 'Logging out…' : 'Log out'}
+                text={loggingOut ? 'Logging out…' : 'Logout'}
                 onClick={handleLogout}
                 disabled={loggingOut}
               />

@@ -9,10 +9,6 @@ import PillLink from './ui/PillLink'
 const LOREM =
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
 
-const NAV_LINKS = [
-  // { to: '/drops', text: 'Drops' },
-]
-
 function parseTargetMs(payload) {
   if (!payload?.phase || !payload.starts_at || !payload.ends_at) return null
   if (payload.phase === 'before') return Date.parse(payload.starts_at)
@@ -82,7 +78,7 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-svh w-full bg-brand-shadow text-brand-shadow">
-      <Navbar links={NAV_LINKS} />
+      <Navbar />
 
       <PageBackground />
 
