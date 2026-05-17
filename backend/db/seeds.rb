@@ -12,6 +12,9 @@ sale.start_time = 2.days.from_now.to_date
 sale.duration = 3.0 # interpreted as hours in product copy; adjust if your app uses another unit
 sale.save!
 
+store = Sale.find_or_initialize_by(name: "Store")
+
+
 [
   ["admin@example.com", "admin"],
   ["client@example.com", "client"],
