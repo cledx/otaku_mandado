@@ -6,6 +6,8 @@
   --color-brand-thistle: #ceb1be;
   --color-brand-dusty: #b97375;
   --color-brand-shadow: #2d2d34;
+  --color-brand-available: #2f6b47;
+  --color-brand-available-bg: #cfe8d6;
 }
 
 :root {
