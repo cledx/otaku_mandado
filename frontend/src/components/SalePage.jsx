@@ -4,6 +4,7 @@ import { parseCountdownTargetMs, splitCountdown } from '../utils/countdown'
 import DigitTimer from './DigitTimer'
 import PageBackground from './layout/PageBackground'
 import Navbar from './navbar/Navbar'
+import ItemUploadModal from './sale/ItemUploadModal'
 import ProductCard from './sale/ProductCard'
 
 /** Served from public/assets/backgrounds/ (same pattern as landing_page.png). */
@@ -33,6 +34,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
   const [payload, setPayload] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [uploadOpen, setUploadOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
   // Public hash routes pass saleId directly; navbar routes resolve from nav_context.
@@ -71,6 +73,17 @@ export default function SalePage({ saleId, mode = 'id' }) {
         },
       }
     })
+  }
+
+  const handleItemsCreated = (created) => {
+    if (!Array.isArray(created) || created.length === 0) return
+    setPayload((prev) => ({
+      ...prev,
+      sale: {
+        ...prev?.sale,
+        items: [...(prev?.sale?.items ?? []), ...created],
+      },
+    }))
   }
 
   // #current-sale and #upcoming-sale: map nav_context booleans to a concrete sale id.
@@ -168,25 +181,44 @@ export default function SalePage({ saleId, mode = 'id' }) {
 
       {/* Drop header: badge + countdown (Figma header strip) */}
       <header className="relative z-10 border-b border-brand-thistle/80 bg-brand-thistle/45 pt-10 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-8 sm:flex-row sm:flex-wrap sm:gap-6 sm:px-6 sm:py-10">
-          <span className="rounded-2xl border-[3px] border-brand-shadow bg-white px-6 py-2 text-lg font-semibold tracking-wide sm:text-xl">
-            {badge}
-          </span>
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-10">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+            <span className="rounded-2xl border-[3px] border-brand-shadow bg-white px-6 py-2 text-lg font-semibold tracking-wide sm:text-xl">
+              {badge}
+            </span>
 
-          <div className="flex flex-col items-start gap-3">
-            <p className="text-left text-sm font-medium sm:text-base">
-              {resolveError || loadError
-                ? 'Drop unavailable'
-                : showTimer
-                  ? timerHeading(phase)
-                  : timerHeading(phase ?? 'after')}
-            </p>
-            {showTimer ? (
-              <DigitTimer hours={hours} minutes={minutes} seconds={seconds} variant="drop" />
-            ) : null}
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-left text-sm font-medium sm:text-base">
+                {resolveError || loadError
+                  ? 'Drop unavailable'
+                  : showTimer
+                    ? timerHeading(phase)
+                    : timerHeading(phase ?? 'after')}
+              </p>
+              {showTimer ? (
+                <DigitTimer hours={hours} minutes={minutes} seconds={seconds} variant="drop" />
+              ) : null}
+            </div>
           </div>
+
+          {isAdmin && resolvedId ? (
+            <button
+              type="button"
+              onClick={() => setUploadOpen(true)}
+              className="rounded-full border border-brand-shadow bg-white px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:border-brand-dusty hover:bg-brand-lavender"
+            >
+              Item Upload
+            </button>
+          ) : null}
         </div>
       </header>
+
+      <ItemUploadModal
+        open={uploadOpen}
+        saleId={resolvedId}
+        onClose={() => setUploadOpen(false)}
+        onItemsCreated={handleItemsCreated}
+      />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         {resolveError ? (

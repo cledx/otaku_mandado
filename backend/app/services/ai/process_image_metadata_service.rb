@@ -49,15 +49,24 @@ module Ai
 
       items.each do |item|
         cloudinary_url = Cloudinary::Utils.cloudinary_url(item.image.first)
-        response = @chat.ask("Analize the image and return the information in the schema", with: cloudinary_url)
-        item.name = response.name
-        item.brand = response.brand
-        item.description = response.description
-        error = response.error
-        error_message = response.error_message
+        response = @chat.ask(
+          "Analyze the image and return the information in the schema. Use id #{item.id} for the id field.",
+          with: cloudinary_url
+        )
+        metadata = extract_metadata(response)
+
+        unless metadata
+          errors << { item_id: item.id, errors: "Invalid LLM response format" }
+          next
+        end
+
+        item.name = metadata[:name]
+        item.brand = metadata[:brand]
+        item.description = metadata[:description]
         item.save
-        if error
-          errors << { item_id: item.id, errors: error_message }
+
+        if metadata[:error]
+          errors << { item_id: item.id, errors: metadata[:error_message].presence || "Image processing failed" }
         end
       end
 
@@ -74,6 +83,24 @@ module Ai
       h = raw.to_h.symbolize_keys
       ids = Array(h[:public_ids]).filter_map { |id| id.to_s.strip.presence }.uniq
       { public_ids: ids }
+    end
+
+    def truthy?(value)
+      ActiveModel::Type::Boolean.new.cast(value)
+    end
+
+    # with_schema returns a Message; parsed fields live in #content (Hash).
+    def extract_metadata(response)
+      content = response&.content
+      return nil unless content.is_a?(Hash)
+
+      {
+        name: content["name"].to_s,
+        brand: content["brand"].to_s,
+        description: content["description"].to_s,
+        error: truthy?(content["error"]),
+        error_message: content["error_message"].to_s
+      }
     end
   end
 end

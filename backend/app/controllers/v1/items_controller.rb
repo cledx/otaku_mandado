@@ -21,11 +21,14 @@ module V1
         metadata: public_ids_metadata
       ).call
 
-      if result.success?
-        render json: { data: result.items.map(&:to_api_hash) }, status: :created
-      else
+      if result.items.empty?
         render json: { errors: result.errors }, status: :unprocessable_entity
+        return
       end
+
+      payload = { data: result.items.map(&:to_api_hash) }
+      payload[:errors] = result.errors if result.errors.present?
+      render json: payload, status: :created
     end
 
     def update

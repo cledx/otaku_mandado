@@ -55,6 +55,32 @@ export function deleteItem(saleId, itemId) {
   return authFetch(`/v1/sales/${saleId}/items/${itemId}`, { method: 'DELETE' })
 }
 
+/** Creates items from Cloudinary public_ids (runs AI metadata on the server). */
+export async function createItemsFromPublicIds(saleId, publicIds) {
+  const token = getAuthToken()
+  if (!token) throw new Error('Not signed in')
+
+  const res = await fetch(`${API_BASE}/v1/sales/${saleId}/items`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ public_ids: publicIds }),
+  })
+  const parsed = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const msg =
+      parsed.error ||
+      (Array.isArray(parsed.errors) ? parsed.errors.join(', ') : null) ||
+      res.statusText ||
+      `Request failed (${res.status})`
+    throw new Error(msg)
+  }
+  return { items: parsed.data, errors: parsed.errors }
+}
+
 export function fetchNavContext() {
   return authFetch('/v1/nav_context')
 }
