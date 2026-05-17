@@ -64,3 +64,21 @@ export function register(email, password, passwordConfirmation) {
     'Registration failed',
   )
 }
+
+export async function logout() {
+  const token = getAuthToken()
+  if (token) {
+    try {
+      await fetch(`${API_BASE}/users/sign_out`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    } catch {
+      // Clear local session even if the server is unreachable
+    }
+  }
+  setAuthToken(null)
+}
