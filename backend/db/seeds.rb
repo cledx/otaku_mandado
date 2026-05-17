@@ -22,6 +22,7 @@ TEXT
 45.times do |i|
   sale.items.create!(
     name: "Item #{i + 1}",
+    brand: "Brand Name",
     description: SEED_ITEM_DESCRIPTION,
     price: 1000 + (i % 41) * 100,
     image: [SEED_ITEM_IMAGE],

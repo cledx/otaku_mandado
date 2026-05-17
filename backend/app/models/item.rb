@@ -38,6 +38,7 @@ class Item < ApplicationRecord
       id: id,
       sale_id: sale_id,
       name: name,
+      brand: brand,
       image: image,
       image_urls: image_urls,
       price: price,
