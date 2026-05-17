@@ -7,6 +7,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
+    # Vite (5173) and optional second dev origin; override with FRONTEND_ORIGINS (comma-separated).
     origins(*Array.wrap(ENV.fetch("FRONTEND_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",").map(&:strip)))
 
     resource "*",

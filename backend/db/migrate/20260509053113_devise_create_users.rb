@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Users table for Devise + devise-jwt (jti used for token revocation).
 class DeviseCreateUsers < ActiveRecord::Migration[8.1]
   def change
     create_table :users do |t|

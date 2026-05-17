@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Multiple pending orders may share the same order_number during checkout.
 class RemoveUniqueIndexFromOrdersOrderNumber < ActiveRecord::Migration[8.1]
   def up
     existing = connection.indexes(:orders).find { |i| i.name == "index_orders_on_order_number" }

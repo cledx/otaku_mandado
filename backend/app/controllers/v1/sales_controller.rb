@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module V1
+  # CRUD for sales (admin). destroy sets deleted_at via SoftDeletable.
   class SalesController < BaseController
     before_action :set_sale, only: %i[show edit update destroy]
 

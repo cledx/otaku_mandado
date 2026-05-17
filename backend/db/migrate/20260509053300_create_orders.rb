@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Orders link a user to an item; order_number groups pending checkout lines.
 class CreateOrders < ActiveRecord::Migration[8.1]
   def change
     create_table :orders do |t|

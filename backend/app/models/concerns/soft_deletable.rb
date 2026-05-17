@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Sets deleted_at instead of destroying rows. Use +kept+ / +discarded+ scopes in queries.
 module SoftDeletable
   extend ActiveSupport::Concern
 

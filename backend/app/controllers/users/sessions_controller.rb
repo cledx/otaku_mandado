@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Users
+  # POST /users/sign_in and DELETE /users/sign_out (JSON + JWT).
   class SessionsController < Devise::SessionsController
     respond_to :json
 

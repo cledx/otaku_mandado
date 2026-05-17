@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Items belong to a sale; image is JSONB array of Cloudinary public_ids.
 class CreateItems < ActiveRecord::Migration[8.1]
   def change
     create_table :items do |t|

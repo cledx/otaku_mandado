@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module V1
+  # Nested under /v1/sales/:sale_id/items. create runs AI metadata extraction from Cloudinary ids.
   class ItemsController < BaseController
     before_action :set_sale
     before_action :set_item, only: %i[show edit update destroy]

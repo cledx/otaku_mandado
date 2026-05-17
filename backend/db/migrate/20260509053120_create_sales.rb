@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# A sale is a timed drop: start_time (date) + duration (hours).
 class CreateSales < ActiveRecord::Migration[8.1]
   def change
     create_table :sales do |t|

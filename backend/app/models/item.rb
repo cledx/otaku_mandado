@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Product listed under a sale. Images are Cloudinary public_ids stored in JSONB.
 class Item < ApplicationRecord
   include SoftDeletable
 
@@ -16,6 +17,7 @@ class Item < ApplicationRecord
   # `image` JSONB: up to 2 Cloudinary public_id strings, e.g. ["sale/abc", "sale/def"].
   # Hashes from upload widgets are normalized to strings before save.
 
+  # Builds CDN URLs when Cloudinary is configured; otherwise returns raw public_ids.
   def image_urls(**options)
     cloudinary = defined?(Cloudinary) && Cloudinary.config.cloud_name.present?
     Array(image).filter_map do |public_id|
@@ -29,6 +31,7 @@ class Item < ApplicationRecord
     end
   end
 
+  # Stable JSON shape for v1 API responses.
   def to_api_hash
     {
       id: id,

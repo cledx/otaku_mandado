@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Ai
+  # Creates items from Cloudinary public_ids, then fills name/brand/description via RubyLLM vision.
   # metadata: { public_ids: ["cloudinary/public_id", ...] } (symbol or string keys from JSON)
   class ProcessImageMetadataService
 
@@ -29,6 +30,7 @@ module Ai
       items = []
       errors = []
 
+      # Persist placeholder rows first so we have ids before the LLM pass.
       metadata[:public_ids].each do |public_id|
         item = Item.new(
           sale: @sale,

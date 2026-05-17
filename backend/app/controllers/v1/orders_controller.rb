@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module V1
+  # Current user's orders only (scoped in set_order and index).
   class OrdersController < BaseController
     before_action :set_order, only: %i[show edit update destroy]
 

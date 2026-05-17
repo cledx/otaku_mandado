@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# admin | client — new accounts default to client.
 class AddRoleToUsers < ActiveRecord::Migration[8.1]
   def change
     add_column :users, :role, :string, null: false, default: "client"

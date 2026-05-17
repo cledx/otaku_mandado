@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module V1
+  # All v1 resources except public landing require a valid JWT (Devise).
   class BaseController < ApplicationController
     before_action :authenticate_user!
 

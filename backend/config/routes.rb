@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  # Auth: JSON only; JWT issued on sign-in/sign-up (see config/initializers/devise.rb).
   devise_for :users,
     defaults: { format: :json },
     controllers: {
@@ -9,8 +10,9 @@ Rails.application.routes.draw do
   get "me", to: "current_user#show"
 
   namespace :v1, defaults: { format: :json } do
-    get "landing_sale", to: "landing_sales#show"
+    get "landing_sale", to: "landing_sales#show" # public
 
+    # Admin sale + nested items; member delete routes alias REST destroy for the SPA.
     resources :sales, only: %i[show create edit update destroy] do
       member do
         delete :delete, action: :destroy
@@ -23,7 +25,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :orders, only: %i[index show new create edit update destroy]
+    resources :orders, only: %i[index show new create edit update destroy] # current_user scoped
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module V1
+  # Public endpoint for the storefront countdown (no auth).
   class LandingSalesController < ApplicationController
     def show
       sale = Sale.next_for_landing
@@ -9,6 +10,7 @@ module V1
 
     private
 
+    # phase: before | during | after — drives landing UI state.
     def landing_payload(sale)
       sa = sale.starts_at
       ea = sale.ends_at

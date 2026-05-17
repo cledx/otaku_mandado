@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Timed product drop (mandado). Discarding a sale soft-deletes its items.
 class Sale < ApplicationRecord
   include SoftDeletable
 
@@ -55,6 +56,7 @@ class Sale < ApplicationRecord
 
   private
 
+  # Cascade soft delete to items when the sale is discarded.
   def discard_items_when_sale_discarded
     previous, current = saved_change_to_deleted_at
     return unless previous.nil? && current.present?

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# GET /me — lightweight session check for the SPA.
 class CurrentUserController < ApplicationController
   before_action :authenticate_user!
 

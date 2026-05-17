@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+# Client purchase intent for an item. Pending orders for the same user share one order_number.
 class Order < ApplicationRecord
   include SoftDeletable
 
+  # Fulfillment pipeline statuses (Spanish product copy may mirror these in the UI).
   STATUSES = [
     "pending",
     "payment fulfilled",
@@ -38,6 +40,8 @@ class Order < ApplicationRecord
 
   private
 
+  # TMP-* placeholder until after_create; then replaced with ORD-{date}-{user_id}-{id}.
+  # Reuses an existing pending order_number so one checkout groups multiple line items.
   def assign_order_number
     return if order_number.present?
 
@@ -74,6 +78,7 @@ class Order < ApplicationRecord
     "ORD-#{order_date_segment}-#{user_id}-#{id}"
   end
 
+  # ddmmyy from the item's sale start (or sale/item created_at fallback).
   def order_date_segment
     date =
       if item&.sale

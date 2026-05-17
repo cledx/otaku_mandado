@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 module Users
+  # POST /users — sign up. Returns JWT in Authorization header (devise-jwt).
   class RegistrationsController < Devise::RegistrationsController
     respond_to :json
 
     def create
+      # sign_up_params excludes :role; new users remain client (User default).
       build_resource(sign_up_params)
 
       if resource.save
