@@ -294,9 +294,11 @@ export default function SalePage({ saleId, mode = 'id' }) {
       />
 
       <main
-        className={`relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 ${
-          isShop && !(isAdmin && resolvedId) ? 'pt-24' : ''
-        }`}
+        className={
+          isShop && !(isAdmin && resolvedId)
+            ? 'relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6 sm:pb-10'
+            : 'relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'
+        }
       >
         {resolveError ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">{resolveError}</p>
