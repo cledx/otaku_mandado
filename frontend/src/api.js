@@ -30,6 +30,14 @@ export function createSale(sale) {
   })
 }
 
+/** Updates a timed drop (admin). */
+export function updateSale(saleId, sale) {
+  return authFetch(`/v1/sales/${saleId}`, {
+    method: 'PATCH',
+    body: { sale },
+  })
+}
+
 /** Public drop page: sale + items + phase/timing (GET /v1/sale_pages/:id). */
 export async function fetchSalePage(id) {
   const res = await fetch(`${API_BASE}/v1/sale_pages/${id}`)

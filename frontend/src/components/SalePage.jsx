@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchNavContext, fetchSale, fetchSalePage, fetchShopSalePage, getAuthToken } from '../api'
+import {
+  fetchNavContext,
+  fetchSale,
+  fetchSalePage,
+  fetchShopSalePage,
+  getAuthToken,
+  updateSale,
+} from '../api'
 import { parseCountdownTargetMs, splitCountdown } from '../utils/countdown'
 import DigitTimer from './DigitTimer'
 import PageBackground from './layout/PageBackground'
@@ -36,7 +43,11 @@ export default function SalePage({ saleId, mode = 'id' }) {
   const [loadError, setLoadError] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [reschedulingStart, setReschedulingStart] = useState(false)
+  const [rescheduleError, setRescheduleError] = useState(null)
   const [now, setNow] = useState(() => Date.now())
+
+  const isUpcomingPage = mode === 'upcoming'
 
   // Public #sale-{id} passes saleId; #browse-shop and nav sales resolve asynchronously.
   const resolvedId = mode === 'id' ? saleId : navResolvedId
@@ -98,6 +109,26 @@ export default function SalePage({ saleId, mode = 'id' }) {
         },
       }
     })
+  }
+
+  const reloadSalePage = async (saleIdForReload) => {
+    const pageData = await fetchSalePage(saleIdForReload)
+    return mergeAdminItems(pageData, saleIdForReload)
+  }
+
+  const handleStartIn10Minutes = async () => {
+    if (!resolvedId) return
+    setReschedulingStart(true)
+    setRescheduleError(null)
+    try {
+      const startTime = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      await updateSale(resolvedId, { start_time: startTime })
+      setPayload(await reloadSalePage(resolvedId))
+    } catch (e) {
+      setRescheduleError(e.message || 'Could not update start time.')
+    } finally {
+      setReschedulingStart(false)
+    }
   }
 
   // #current-sale and #upcoming-sale: map nav_context booleans to a concrete sale id.
@@ -274,13 +305,32 @@ export default function SalePage({ saleId, mode = 'id' }) {
           ) : null}
 
           {isAdmin && resolvedId ? (
-            <button
-              type="button"
-              onClick={() => setUploadOpen(true)}
-              className="rounded-full border border-brand-shadow bg-white px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:border-brand-dusty hover:bg-brand-lavender"
-            >
-              Item Upload
-            </button>
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              {rescheduleError ? (
+                <p className="text-right text-xs text-brand-dusty" role="alert">
+                  {rescheduleError}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                {isUpcomingPage ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleStartIn10Minutes()}
+                    disabled={reschedulingStart}
+                    className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {reschedulingStart ? 'Updating…' : 'Start in 10 minutes'}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setUploadOpen(true)}
+                  className="rounded-full border border-brand-shadow bg-white px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:border-brand-dusty hover:bg-brand-lavender"
+                >
+                  Item Upload
+                </button>
+              </div>
+            </div>
           ) : null}
         </div>
       </header>
