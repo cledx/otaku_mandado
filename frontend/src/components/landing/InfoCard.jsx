@@ -8,12 +8,14 @@ export default function InfoCard({ title, children, variant = 'lavender', classN
     <article
       className={`rounded-xl p-6 text-left shadow-md ring-1 ring-brand-thistle/30 sm:p-8 ${variants[variant] ?? variants.lavender} ${className}`.trim()}
     >
-      <h2 className="mb-3 text-center font-sans text-lg font-bold text-brand-shadow sm:text-xl">
-        {title}
-      </h2>
-      <p className="text-center text-sm leading-relaxed text-brand-shadow/75 sm:text-base">
+      {title ? (
+        <h2 className="mb-3 text-center font-sans text-lg font-bold text-brand-shadow sm:text-xl">
+          {title}
+        </h2>
+      ) : null}
+      <div className="text-center text-sm leading-relaxed text-brand-shadow/75 sm:text-base">
         {children}
-      </p>
+      </div>
     </article>
   )
 }

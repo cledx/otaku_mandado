@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_130000) do
     t.datetime "deleted_at"
     t.float "duration"
     t.string "name"
-    t.date "start_time"
+    t.datetime "start_time"
     t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "index_sales_on_deleted_at"
   end

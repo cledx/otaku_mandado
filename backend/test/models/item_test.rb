@@ -4,7 +4,7 @@ require "test_helper"
 
 class ItemTest < ActiveSupport::TestCase
   setup do
-    @sale = Sale.create!(name: "Test Sale", start_time: Date.current, duration: 1.0)
+    @sale = Sale.create!(name: "Test Sale", start_time: Time.current, duration: 1.0)
   end
 
   test "sets mx_price when price is assigned on create" do

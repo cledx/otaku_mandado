@@ -84,7 +84,7 @@ class Order < ApplicationRecord
       if item&.sale
         s = item.sale
         if s.start_time.present?
-          s.start_time
+          s.start_time.in_time_zone.to_date
         else
           s.created_at.in_time_zone.to_date
         end

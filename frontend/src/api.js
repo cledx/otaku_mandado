@@ -22,6 +22,14 @@ export function fetchSale(saleId) {
   return authFetch(`/v1/sales/${saleId}`)
 }
 
+/** Creates a timed drop (admin). */
+export function createSale(sale) {
+  return authFetch('/v1/sales', {
+    method: 'POST',
+    body: { sale },
+  })
+}
+
 /** Public drop page: sale + items + phase/timing (GET /v1/sale_pages/:id). */
 export async function fetchSalePage(id) {
   const res = await fetch(`${API_BASE}/v1/sale_pages/${id}`)

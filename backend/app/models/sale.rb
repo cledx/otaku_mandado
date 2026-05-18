@@ -10,11 +10,11 @@ class Sale < ApplicationRecord
 
   after_update :discard_items_when_sale_discarded, if: :saved_change_to_deleted_at?
 
-  # Calendar day start in Time.zone; duration is hours (see db/seeds.rb).
+  # Drop opens at start_time in Time.zone; duration is hours (see db/seeds.rb).
   def starts_at
     return if start_time.blank?
 
-    start_time.in_time_zone(Time.zone).beginning_of_day
+    start_time.in_time_zone(Time.zone)
   end
 
   def ends_at

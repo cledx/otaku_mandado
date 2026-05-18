@@ -8,7 +8,7 @@ Sale.destroy_all
 Item.destroy_all
 
 sale = Sale.new(name: "Seed Sale")
-sale.start_time = 2.days.from_now.to_date
+sale.start_time = 2.days.from_now.change(hour: 12, min: 0)
 sale.duration = 3.0 # interpreted as hours in product copy; adjust if your app uses another unit
 sale.save!
 
@@ -30,9 +30,20 @@ TEXT
   )
 end
 
-# This will be the persistent sale that is used for items that are not part of a sale and always available.
+# Persistent catalog (Browse Shop); items appear on the landing-page carousel.
 shop = Sale.find_or_initialize_by(name: Sale::SHOP_NAME)
 shop.save! if shop.new_record?
+
+8.times do |i|
+  shop.items.create!(
+    name: "Shop Item #{i + 1}",
+    brand: "Brand Name",
+    description: SEED_ITEM_DESCRIPTION,
+    price: 2500 + (i % 17) * 150,
+    image: [SEED_ITEM_IMAGE],
+    status: Item::STATUSES.sample
+  )
+end
 
 
 [

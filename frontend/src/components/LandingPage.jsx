@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchLandingSale } from '../api'
+import { fetchLandingSale, fetchSalePage, fetchShopSalePage } from '../api'
 import DigitTimer from './DigitTimer'
 import InfoCard from './landing/InfoCard'
+import ItemCarousel from './landing/ItemCarousel'
 import PageBackground from './layout/PageBackground'
 import Navbar from './navbar/Navbar'
 import PillLink from './ui/PillLink'
-
-const LOREM =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
 
 function parseTargetMs(payload) {
   if (!payload?.phase || !payload.starts_at || !payload.ends_at) return null
@@ -28,6 +26,8 @@ function splitCountdown(ms) {
 export default function LandingPage() {
   const [payload, setPayload] = useState(null)
   const [error, setError] = useState(null)
+  const [shopItems, setShopItems] = useState([])
+  const [dropItems, setDropItems] = useState([])
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -57,6 +57,47 @@ export default function LandingPage() {
   }, [])
 
   useEffect(() => {
+    if (payload?.phase === 'during' && payload?.sale?.id) return undefined
+
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        const pageData = await fetchShopSalePage()
+        if (!cancelled) setShopItems(pageData?.sale?.items ?? [])
+      } catch {
+        if (!cancelled) setShopItems([])
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [payload?.phase, payload?.sale?.id])
+
+  useEffect(() => {
+    if (payload?.phase !== 'during' || payload?.sale?.id == null) return undefined
+
+    let cancelled = false
+    const saleId = payload.sale.id
+
+    const run = async () => {
+      try {
+        const pageData = await fetchSalePage(saleId)
+        if (!cancelled) setDropItems(pageData?.sale?.items ?? [])
+      } catch {
+        if (!cancelled) setDropItems([])
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [payload?.phase, payload?.sale?.id])
+
+  useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [])
@@ -74,8 +115,10 @@ export default function LandingPage() {
       : 'Time Until Next Drop:'
 
   const showTimer = Boolean(payload && targetMs != null && !error)
-  const showDropLink = showTimer && payload?.phase === 'during'
-  const dropHref = payload?.sale?.id != null ? `#sale-${payload.sale.id}` : '#'
+  const hasCurrentDrop = payload?.phase === 'during' && payload?.sale?.id != null
+  const showDropLink = showTimer && hasCurrentDrop
+  const dropHref = hasCurrentDrop ? `#sale-${payload.sale.id}` : '#'
+  const carouselItems = hasCurrentDrop ? dropItems : shopItems
 
   return (
     <div className="relative min-h-svh w-full bg-brand-shadow text-brand-shadow">
@@ -110,11 +153,46 @@ export default function LandingPage() {
         <section className="relative -mt-36 mx-auto mb-10 w-full max-w-5xl px-4 sm:-mt-44 sm:mb-14 sm:px-6">
           <div className="rounded-2xl border border-brand-dusty/35 bg-brand-thistle/55 p-4 shadow-xl backdrop-blur-sm sm:rounded-3xl sm:p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-              <InfoCard title="Lorem ipsum dolor sit amet" variant="lavender">
-                {LOREM}
-              </InfoCard>
-              <InfoCard title="Consectetur adipiscing elit" variant="alabaster">
-                {LOREM}
+              {hasCurrentDrop ? (
+                <InfoCard title="¡Drop en curso!" variant="lavender">
+                  <p>
+                    ¡Ahora mismo hay un drop en marcha! Los artículos que ves en el carrusel son solo una
+                    muestra de lo que está disponible en esta entrega.
+                  </p>
+                  <p className="mt-4">
+                    Entra al drop completo para ver todo el catálogo, elegir tus favoritos y asegurarlos
+                    antes de que se acabe el tiempo. Cada pieza es por tiempo limitado: no dejes pasar la
+                    oportunidad.
+                  </p>
+                  <PillLink to={dropHref} className="mt-6 px-8 py-2.5 text-sm">
+                    Ir al drop actual
+                  </PillLink>
+                </InfoCard>
+              ) : (
+                <InfoCard title="Mientras esperas" variant="lavender">
+                  <p>
+                    El próximo drop está en camino, pero eso no significa que te quedes con las manos
+                    vacías. Mientras cuentas los minutos, pásate por nuestra tienda permanente.
+                  </p>
+                  <p className="mt-4">
+                    Ahí encontrarás piezas disponibles todo el año, listas para llevártelas cuando quieras.
+                    Échales un vistazo en el carrusel y entra a la tienda cuando algo te llame la atención.
+                  </p>
+                  <PillLink to="#browse-shop" className="mt-6 px-8 py-2.5 text-sm">
+                    Ver tienda
+                  </PillLink>
+                </InfoCard>
+              )}
+              <InfoCard variant="alabaster">
+                <ItemCarousel
+                  items={carouselItems}
+                  slidesLabel={hasCurrentDrop ? 'Drop actual' : 'Tienda'}
+                  emptyMessage={
+                    hasCurrentDrop
+                      ? 'Todavía no hay artículos en este drop. Vuelve pronto.'
+                      : 'Todavía no hay artículos en la tienda. Vuelve pronto.'
+                  }
+                />
               </InfoCard>
             </div>
           </div>
