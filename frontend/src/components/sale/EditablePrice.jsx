@@ -17,7 +17,7 @@ export function formatMxPrice(mxPrice) {
 /**
  * Customer-facing MXN price; admins click to edit underlying JPY `price` on the server.
  */
-export default function EditablePrice({ item, admin, saleId, onUpdated }) {
+export default function EditablePrice({ item, admin, saleId, onUpdated, variant = 'default' }) {
   const inputId = useId()
   const inputRef = useRef(null)
   const [editing, setEditing] = useState(false)
@@ -28,6 +28,7 @@ export default function EditablePrice({ item, admin, saleId, onUpdated }) {
   const canEdit = Boolean(admin && saleId != null)
   const display = formatMxPrice(item.mx_price)
   const showYen = Boolean(admin)
+  const onCard = variant === 'onCard'
 
   useEffect(() => {
     if (editing) inputRef.current?.focus()
@@ -112,32 +113,60 @@ export default function EditablePrice({ item, admin, saleId, onUpdated }) {
 
   if (canEdit) {
     return (
-      <div className="mt-2">
+      <div className={onCard ? 'text-center' : 'mt-2'}>
         <button
           type="button"
           onClick={startEdit}
-          className="group rounded-lg px-1 py-0.5 text-left transition hover:bg-brand-alabaster/80"
+          className={
+            onCard
+              ? 'group rounded-lg px-1 py-0.5 transition hover:bg-white/10'
+              : 'group rounded-lg px-1 py-0.5 text-left transition hover:bg-brand-alabaster/80'
+          }
           title="Edit price (stored in yen)"
         >
-          <span className="text-lg font-bold text-brand-shadow group-hover:text-brand-dusty">
+          <span
+            className={
+              onCard
+                ? 'text-lg font-bold text-white group-hover:text-brand-lavender'
+                : 'text-lg font-bold text-brand-shadow group-hover:text-brand-dusty'
+            }
+          >
             {display}
           </span>
-          <span className="ml-2 text-xs font-medium text-brand-shadow/50 group-hover:text-brand-dusty">
+          <span
+            className={
+              onCard
+                ? 'ml-2 text-xs font-medium text-white/70 group-hover:text-white'
+                : 'ml-2 text-xs font-medium text-brand-shadow/50 group-hover:text-brand-dusty'
+            }
+          >
             Edit
           </span>
         </button>
         {showYen ? (
           item.price != null ? (
-            <p className="mt-0.5 text-xs text-brand-shadow/50">
+            <p className={onCard ? 'mt-0.5 text-xs text-white/70' : 'mt-0.5 text-xs text-brand-shadow/50'}>
               ¥{Number(item.price).toLocaleString()} JPY
             </p>
           ) : (
-            <p className="mt-0.5 text-xs text-brand-dusty">No price set — click to add</p>
+            <p className={onCard ? 'mt-0.5 text-xs text-brand-lavender' : 'mt-0.5 text-xs text-brand-dusty'}>
+              No price set — click to add
+            </p>
           )
         ) : null}
       </div>
     )
   }
 
-  return <p className="mt-2 text-lg font-bold text-brand-shadow">{display}</p>
+  return (
+    <p
+      className={
+        onCard
+          ? 'text-center text-lg font-bold text-white'
+          : 'mt-2 text-lg font-bold text-brand-shadow'
+      }
+    >
+      {display}
+    </p>
+  )
 }
