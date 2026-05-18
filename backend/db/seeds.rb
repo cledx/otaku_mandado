@@ -31,7 +31,8 @@ TEXT
 end
 
 # This will be the persistent sale that is used for items that are not part of a sale and always available.
-store = Sale.find_or_initialize_by(name: "Store")
+shop = Sale.find_or_initialize_by(name: Sale::SHOP_NAME)
+shop.save! if shop.new_record?
 
 
 [

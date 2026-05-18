@@ -4,10 +4,11 @@ import SalePage from './components/SalePage'
 
 /**
  * Hash-based routing until react-router is added.
- * Navbar and landing CTAs use #current-sale, #upcoming-sale, and #sale-{id}.
+ * Navbar and landing CTAs use #current-sale, #upcoming-sale, #browse-shop, and #sale-{id}.
  */
 function parseRoute() {
   const hash = window.location.hash.replace(/^#/, '')
+  if (hash === 'browse-shop') return { page: 'sale', mode: 'shop' }
   if (hash === 'current-sale') return { page: 'sale', mode: 'current' }
   if (hash === 'upcoming-sale') return { page: 'sale', mode: 'upcoming' }
   const saleMatch = hash.match(/^sale-(\d+)$/)

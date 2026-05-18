@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { deleteItem } from '../../api'
 import ConfirmDialog from '../ui/ConfirmDialog'
+import EditablePrice from './EditablePrice'
 
 /** Gray placeholder when an item has no Cloudinary image yet. */
 function ImagePlaceholder() {
@@ -31,19 +32,6 @@ function DeleteIcon() {
   )
 }
 
-/** Formats mx_price (MXN, rounded on the server) for display. */
-function formatMxPrice(mxPrice) {
-  if (mxPrice == null || mxPrice === '') return '$0'
-  const n = Number(mxPrice)
-  if (Number.isNaN(n)) return String(mxPrice)
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  }).format(n)
-}
-
 const STATUS_PILL = {
   available: { label: 'Available', className: 'bg-brand-available-bg text-brand-available' },
   reserved: { label: 'Reserved', className: 'bg-brand-dusty/25 text-brand-dusty' },
@@ -68,9 +56,9 @@ function StatusPill({ status }) {
 
 /**
  * Single product tile on the sale (drop) page grid.
- * @param {{ item: object, admin?: boolean, saleId?: string, onDeleted?: (itemId: number) => void }} props
+ * @param {{ item: object, admin?: boolean, saleId?: string, onDeleted?: (itemId: number) => void, onUpdated?: (item: object) => void }} props
  */
-export default function ProductCard({ item, admin = false, saleId, onDeleted }) {
+export default function ProductCard({ item, admin = false, saleId, onDeleted, onUpdated }) {
   const imageUrl = item.image_urls?.[0]
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -129,7 +117,7 @@ export default function ProductCard({ item, admin = false, saleId, onDeleted }) 
         <div className="mt-2">
           <StatusPill status={item.status} />
         </div>
-        <p className="mt-2 text-lg font-bold text-brand-shadow">{formatMxPrice(item.mx_price)}</p>
+        <EditablePrice item={item} admin={admin} saleId={saleId} onUpdated={onUpdated} />
         <p className="mt-1 line-clamp-3 text-sm text-brand-shadow/75">
           {item.description || 'No description yet.'}
         </p>

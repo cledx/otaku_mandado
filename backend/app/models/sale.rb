@@ -4,6 +4,8 @@
 class Sale < ApplicationRecord
   include SoftDeletable
 
+  SHOP_NAME = "Shop"
+
   has_many :items, dependent: :destroy
 
   after_update :discard_items_when_sale_discarded, if: :saved_change_to_deleted_at?
@@ -36,6 +38,15 @@ class Sale < ApplicationRecord
     end
   end
 
+  def self.shop
+    kept.find_by!(name: SHOP_NAME)
+  end
+
+  # Public drop page JSON (items + optional countdown timing).
+  def sale_page_data(include_price: false, time: Time.current)
+    timing_payload(time).merge(sale: to_api_hash(include_items: true, include_price: include_price))
+  end
+
   # Shared JSON timing block for landing_sale and sale_pages API responses.
   def timing_payload(time = Time.current)
     sa = starts_at
@@ -50,15 +61,15 @@ class Sale < ApplicationRecord
   # Resolves which sale backs the navbar "Current Sale" link for the given role.
   def self.current_for_nav(role)
     predicate = role == "admin" ? :admin_current_nav? : :client_current_nav?
-    kept.order(:start_time, :id).find { |sale| public_send(predicate, sale) }
+    timed_drops.order(:start_time, :id).find { |sale| public_send(predicate, sale) }
   end
 
   def self.ongoing
-    kept.order(:start_time, :id).find { |sale| active_now?(sale) }
+    timed_drops.order(:start_time, :id).find { |sale| active_now?(sale) }
   end
 
   def self.next_scheduled
-    kept.order(:start_time, :id).find do |sale|
+    timed_drops.order(:start_time, :id).find do |sale|
       sa = sale.starts_at
       sa && sa > Time.current
     end
@@ -89,8 +100,12 @@ class Sale < ApplicationRecord
   end
 
   # Prefer the in-progress drop; otherwise the first sale whose start is after (now - 5 hours).
+  def self.timed_drops
+    kept.where.not(name: SHOP_NAME)
+  end
+
   def self.next_for_landing
-    sales = kept.order(:start_time, :id).to_a
+    sales = timed_drops.order(:start_time, :id).to_a
     active = sales.find do |sale|
       sa = sale.starts_at
       ea = sale.ends_at
@@ -105,7 +120,7 @@ class Sale < ApplicationRecord
     end
   end
 
-  def to_api_hash(include_items: false)
+  def to_api_hash(include_items: false, include_price: true)
     h = {
       id: id,
       start_time: start_time,
@@ -116,7 +131,7 @@ class Sale < ApplicationRecord
       updated_at: updated_at
     }
     if include_items
-      h[:items] = items.kept.order(:id).map(&:to_api_hash)
+      h[:items] = items.kept.order(:id).map { |item| item.to_api_hash(include_price: include_price) }
     end
     h
   end

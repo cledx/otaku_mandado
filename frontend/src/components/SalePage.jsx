@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchNavContext, fetchSalePage, getAuthToken } from '../api'
+import { fetchNavContext, fetchSale, fetchSalePage, fetchShopSalePage, getAuthToken } from '../api'
 import { parseCountdownTargetMs, splitCountdown } from '../utils/countdown'
 import DigitTimer from './DigitTimer'
 import PageBackground from './layout/PageBackground'
@@ -26,9 +26,10 @@ function timerHeading(phase) {
 /**
  * Single-sale drop page (Figma "Drop Page").
  * @param {string} [saleId] — used when mode is "id" (#sale-{id} from landing)
- * @param {'id'|'current'|'upcoming'} [mode] — current/upcoming resolve via nav_context (auth required)
+ * @param {'id'|'current'|'upcoming'|'shop'} [mode] — shop loads sale named "Shop"; current/upcoming use nav_context
  */
 export default function SalePage({ saleId, mode = 'id' }) {
+  const isShop = mode === 'shop'
   const [navResolvedId, setNavResolvedId] = useState(null)
   const [resolveError, setResolveError] = useState(null)
   const [payload, setPayload] = useState(null)
@@ -37,7 +38,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
-  // Public hash routes pass saleId directly; navbar routes resolve from nav_context.
+  // Public #sale-{id} passes saleId; #browse-shop and nav sales resolve asynchronously.
   const resolvedId = mode === 'id' ? saleId : navResolvedId
 
   // Show delete controls when the signed-in user is an admin.
@@ -86,9 +87,22 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }))
   }
 
+  const handleItemUpdated = (updated) => {
+    setPayload((prev) => {
+      if (!prev?.sale?.items) return prev
+      return {
+        ...prev,
+        sale: {
+          ...prev.sale,
+          items: prev.sale.items.map((i) => (i.id === updated.id ? updated : i)),
+        },
+      }
+    })
+  }
+
   // #current-sale and #upcoming-sale: map nav_context booleans to a concrete sale id.
   useEffect(() => {
-    if (mode === 'id') return
+    if (mode === 'id' || mode === 'shop') return
 
     let cancelled = false
 
@@ -127,15 +141,62 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }, [mode])
 
-  // Load sale + items from the public sale_pages endpoint; refresh every minute.
+  const mergeAdminItems = async (pageData, saleIdForAdmin) => {
+    if (!isAdmin || !getAuthToken()) return pageData
+    const sale = await fetchSale(saleIdForAdmin)
+    return {
+      ...pageData,
+      sale: {
+        ...pageData.sale,
+        items: sale.items ?? [],
+      },
+    }
+  }
+
+  // #browse-shop: persistent catalog (no countdown).
   useEffect(() => {
-    if (!resolvedId) return
+    if (!isShop) return
 
     let cancelled = false
 
     const load = async () => {
       try {
-        const data = await fetchSalePage(resolvedId)
+        const pageData = await fetchShopSalePage()
+        const data = await mergeAdminItems(pageData, String(pageData.sale.id))
+        if (!cancelled) {
+          setNavResolvedId(String(pageData.sale.id))
+          setLoadError(null)
+          setResolveError(null)
+          setPayload(data)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e.message)
+          setPayload(null)
+          setNavResolvedId(null)
+        }
+      }
+    }
+
+    void load()
+    const id = window.setInterval(() => void load(), 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [isShop, isAdmin])
+
+  // Public sale_pages for timing; admins merge in items with yen price from GET /v1/sales/:id.
+  useEffect(() => {
+    if (isShop || !resolvedId) return
+
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        const pageData = await fetchSalePage(resolvedId)
+        const data = await mergeAdminItems(pageData, resolvedId)
+
         if (!cancelled) {
           setLoadError(null)
           setPayload(data)
@@ -154,13 +215,14 @@ export default function SalePage({ saleId, mode = 'id' }) {
       cancelled = true
       window.clearInterval(id)
     }
-  }, [resolvedId])
+  }, [isShop, resolvedId, isAdmin])
 
   // Tick every second so the countdown stays in sync with the landing page.
   useEffect(() => {
+    if (isShop) return
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
-  }, [])
+  }, [isShop])
 
   const targetMs = useMemo(() => parseCountdownTargetMs(payload), [payload])
   const { hours, minutes, seconds } = useMemo(() => {
@@ -170,7 +232,8 @@ export default function SalePage({ saleId, mode = 'id' }) {
 
   const phase = payload?.phase
   const items = payload?.sale?.items ?? []
-  const showTimer = Boolean(payload && targetMs != null && !loadError && !resolveError)
+  const showTimer =
+    !isShop && Boolean(payload && targetMs != null && !loadError && !resolveError)
   const badge = dropBadgeLabel(phase)
 
   return (
@@ -179,27 +242,36 @@ export default function SalePage({ saleId, mode = 'id' }) {
 
       <PageBackground imageUrl={SALE_BACKGROUND} />
 
-      {/* Drop header: badge + countdown (Figma header strip) */}
+      {/* Drop header: badge + countdown (Figma header strip); shop omits timing */}
+      {(!isShop || (isAdmin && resolvedId)) ? (
       <header className="relative z-10 border-b border-brand-thistle/80 bg-brand-thistle/45 pt-10 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-10">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
-            <span className="rounded-2xl border-[3px] border-brand-shadow bg-white px-6 py-2 text-lg font-semibold tracking-wide sm:text-xl">
-              {badge}
-            </span>
+        <div
+          className={`mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:px-6 ${
+            isShop
+              ? 'items-end justify-end py-4 sm:flex-row sm:py-5'
+              : 'items-start py-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-6 sm:py-10'
+          }`}
+        >
+          {!isShop ? (
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+              <span className="rounded-2xl border-[3px] border-brand-shadow bg-white px-6 py-2 text-lg font-semibold tracking-wide sm:text-xl">
+                {badge}
+              </span>
 
-            <div className="flex flex-col items-start gap-3">
-              <p className="text-left text-sm font-medium sm:text-base">
-                {resolveError || loadError
-                  ? 'Drop unavailable'
-                  : showTimer
-                    ? timerHeading(phase)
-                    : timerHeading(phase ?? 'after')}
-              </p>
-              {showTimer ? (
-                <DigitTimer hours={hours} minutes={minutes} seconds={seconds} variant="drop" />
-              ) : null}
+              <div className="flex flex-col items-start gap-3">
+                <p className="text-left text-sm font-medium sm:text-base">
+                  {resolveError || loadError
+                    ? 'Drop unavailable'
+                    : showTimer
+                      ? timerHeading(phase)
+                      : timerHeading(phase ?? 'after')}
+                </p>
+                {showTimer ? (
+                  <DigitTimer hours={hours} minutes={minutes} seconds={seconds} variant="drop" />
+                ) : null}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {isAdmin && resolvedId ? (
             <button
@@ -212,6 +284,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
           ) : null}
         </div>
       </header>
+      ) : null}
 
       <ItemUploadModal
         open={uploadOpen}
@@ -220,16 +293,20 @@ export default function SalePage({ saleId, mode = 'id' }) {
         onItemsCreated={handleItemsCreated}
       />
 
-      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <main
+        className={`relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 ${
+          isShop && !(isAdmin && resolvedId) ? 'pt-24' : ''
+        }`}
+      >
         {resolveError ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">{resolveError}</p>
         ) : loadError ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">{loadError}</p>
-        ) : !resolvedId ? (
+        ) : (isShop ? !payload : !resolvedId) ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">Loading sale…</p>
         ) : items.length === 0 ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">
-            No items in this drop yet. Check back soon!
+            {isShop ? 'No items in the shop yet. Check back soon!' : 'No items in this drop yet. Check back soon!'}
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
@@ -240,6 +317,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
                   admin={isAdmin}
                   saleId={resolvedId}
                   onDeleted={handleItemDeleted}
+                  onUpdated={handleItemUpdated}
                 />
               </li>
             ))}

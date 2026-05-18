@@ -14,8 +14,9 @@ module V1
     private
 
     # Matches landing_sale shape but includes nested items for the product grid.
+    # Yen price is omitted here; only mx_price is public. Admins use GET /v1/sales/:id.
     def sale_page_payload(sale)
-      sale.timing_payload.merge(sale: sale.to_api_hash(include_items: true))
+      sale.sale_page_data(include_price: false)
     end
   end
 end

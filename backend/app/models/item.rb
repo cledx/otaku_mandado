@@ -33,15 +33,15 @@ class Item < ApplicationRecord
   end
 
   # Stable JSON shape for v1 API responses.
-  def to_api_hash
-    {
+  # Omit yen `price` on public sale pages; admins load it via authenticated sale#show.
+  def to_api_hash(include_price: true)
+    h = {
       id: id,
       sale_id: sale_id,
       name: name,
       brand: brand,
       image: image,
       image_urls: image_urls,
-      price: price,
       mx_price: mx_price,
       description: description,
       status: status,
@@ -49,6 +49,8 @@ class Item < ApplicationRecord
       created_at: created_at,
       updated_at: updated_at
     }
+    h[:price] = price if include_price
+    h
   end
 
   private

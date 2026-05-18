@@ -17,11 +17,24 @@ export async function fetchLandingSale() {
   return (await res.json()).data
 }
 
+/** Authenticated sale with items (includes yen price for admin). */
+export function fetchSale(saleId) {
+  return authFetch(`/v1/sales/${saleId}`)
+}
+
 /** Public drop page: sale + items + phase/timing (GET /v1/sale_pages/:id). */
 export async function fetchSalePage(id) {
   const res = await fetch(`${API_BASE}/v1/sale_pages/${id}`)
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body.error || `sale_page ${res.status}`)
+  return body.data
+}
+
+/** Persistent shop catalog (sale named "Shop"; GET /v1/shop_sale). */
+export async function fetchShopSalePage() {
+  const res = await fetch(`${API_BASE}/v1/shop_sale`)
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body.error || `shop_sale ${res.status}`)
   return body.data
 }
 
@@ -53,6 +66,14 @@ async function authFetch(path, options = {}) {
 /** Soft-deletes an item nested under a sale (admin). */
 export function deleteItem(saleId, itemId) {
   return authFetch(`/v1/sales/${saleId}/items/${itemId}`, { method: 'DELETE' })
+}
+
+/** Updates an item; pass `price` in JPY (server recalculates mx_price). */
+export function updateItem(saleId, itemId, item) {
+  return authFetch(`/v1/sales/${saleId}/items/${itemId}`, {
+    method: 'PATCH',
+    body: { item },
+  })
 }
 
 /** Creates items from Cloudinary public_ids (runs AI metadata on the server). */

@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
   namespace :v1, defaults: { format: :json } do
     get "landing_sale", to: "landing_sales#show" # public
+    get "shop_sale", to: "shop_sales#show" # public
     get "sale_pages/:id", to: "sale_pages#show" # public
     get "nav_context", to: "nav_context#show"
 
