@@ -5,12 +5,20 @@
 export default function PageBackground({
   imageUrl = '/assets/backgrounds/landing_page.png',
   className = '',
+  overlay = true,
 }) {
+  const backgroundImage = overlay
+    ? `linear-gradient(to bottom, rgba(45,45,52,0.32), rgba(45,45,52,0.58)), url('${imageUrl}')`
+    : `url('${imageUrl}')`
+  const backgroundSize = overlay ? '100% 100%, 100% 100%' : '100% 100%'
+  const backgroundPosition = overlay ? 'center, center' : 'center'
+  const backgroundRepeat = overlay ? 'no-repeat, no-repeat' : 'no-repeat'
+
   const style = {
-    backgroundImage: `linear-gradient(to bottom, rgba(45,45,52,0.32), rgba(45,45,52,0.58)), url('${imageUrl}')`,
-    backgroundSize: '100% 100%, 100% 100%',
-    backgroundPosition: 'center, center',
-    backgroundRepeat: 'no-repeat, no-repeat',
+    backgroundImage,
+    backgroundSize,
+    backgroundPosition,
+    backgroundRepeat,
   }
 
   return (

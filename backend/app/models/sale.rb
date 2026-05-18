@@ -42,6 +42,10 @@ class Sale < ApplicationRecord
     kept.find_by!(name: SHOP_NAME)
   end
 
+  def shop?
+    name == SHOP_NAME
+  end
+
   # Public drop page JSON (items + optional countdown timing).
   def sale_page_data(include_price: false, time: Time.current)
     timing_payload(time).merge(sale: to_api_hash(include_items: true, include_price: include_price))

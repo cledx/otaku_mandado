@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { deleteItem } from '../../api'
+import { itemRouteHash, setAppHash } from '../../utils/hashRoute'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import EditablePrice from './EditablePrice'
 
@@ -65,6 +66,13 @@ export default function ProductCard({ item, admin = false, saleId, onDeleted, on
   const [deleteError, setDeleteError] = useState(null)
 
   const showDelete = admin && saleId != null
+  const saleKey = item.sale_id ?? saleId
+  const canNavigate = saleKey != null && item.id != null
+
+  const navigateToItem = () => {
+    if (!canNavigate) return
+    setAppHash(itemRouteHash(saleKey, item.id))
+  }
 
   const handleConfirmDelete = async () => {
     setDeleteError(null)
@@ -80,9 +88,30 @@ export default function ProductCard({ item, admin = false, saleId, onDeleted, on
     }
   }
 
+  const stopCardNav = (e) => {
+    e.stopPropagation()
+  }
+
   return (
     <>
-      <article className="relative flex flex-col overflow-hidden rounded-2xl bg-white p-3 shadow-sm sm:p-4">
+      <article
+        role={canNavigate ? 'link' : undefined}
+        tabIndex={canNavigate ? 0 : undefined}
+        onClick={canNavigate ? navigateToItem : undefined}
+        onKeyDown={
+          canNavigate
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigateToItem()
+                }
+              }
+            : undefined
+        }
+        className={`relative flex flex-col overflow-hidden rounded-2xl bg-white p-3 shadow-sm sm:p-4 ${
+          canNavigate ? 'cursor-pointer transition hover:ring-2 hover:ring-brand-dusty/40' : ''
+        }`}
+      >
         <div className="relative">
           {imageUrl ? (
             <img
@@ -97,7 +126,8 @@ export default function ProductCard({ item, admin = false, saleId, onDeleted, on
             <button
               type="button"
               aria-label={`Delete ${item.name || 'item'}`}
-              onClick={() => {
+              onClick={(e) => {
+                stopCardNav(e)
                 setDeleteError(null)
                 setConfirmOpen(true)
               }}
@@ -117,7 +147,9 @@ export default function ProductCard({ item, admin = false, saleId, onDeleted, on
         <div className="mt-2">
           <StatusPill status={item.status} />
         </div>
-        <EditablePrice item={item} admin={admin} saleId={saleId} onUpdated={onUpdated} />
+        <div onClick={admin ? stopCardNav : undefined} onKeyDown={admin ? stopCardNav : undefined}>
+          <EditablePrice item={item} admin={admin} saleId={saleId} onUpdated={onUpdated} />
+        </div>
         <p className="mt-1 line-clamp-3 text-sm text-brand-shadow/75">
           {item.description || 'No description yet.'}
         </p>

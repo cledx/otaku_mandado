@@ -46,6 +46,28 @@ export async function fetchSalePage(id) {
   return body.data
 }
 
+/** Public item detail (visibility rules on the server). Sends JWT when signed in. */
+export async function fetchItemPage(saleId, itemId) {
+  const token = getAuthToken()
+  const headers = { Accept: 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await fetch(`${API_BASE}/v1/item_pages/${saleId}/${itemId}`, { headers })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body.error || `item_page ${res.status}`)
+  }
+  return body.data
+}
+
+/** Reserves an item for the signed-in user (POST /v1/orders). */
+export function createOrder(itemId) {
+  return authFetch('/v1/orders', {
+    method: 'POST',
+    body: { order: { item_id: itemId } },
+  })
+}
+
 /** Persistent shop catalog (sale named "Shop"; GET /v1/shop_sale). */
 export async function fetchShopSalePage() {
   const res = await fetch(`${API_BASE}/v1/shop_sale`)

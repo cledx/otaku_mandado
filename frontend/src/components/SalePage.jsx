@@ -367,7 +367,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
                 <ProductCard
                   item={item}
                   admin={isAdmin}
-                  saleId={resolvedId}
+                  saleId={resolvedId ?? payload?.sale?.id}
                   onDeleted={handleItemDeleted}
                   onUpdated={handleItemUpdated}
                 />

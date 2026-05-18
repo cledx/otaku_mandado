@@ -34,6 +34,24 @@ class Item < ApplicationRecord
 
   # Stable JSON shape for v1 API responses.
   # Omit yen `price` on public sale pages; admins load it via authenticated sale#show.
+  # Item detail page: static shop, live timed drop, user's order, or admin.
+  def viewable_by?(user: nil)
+    return true if user&.role == "admin"
+    return true if sale.shop?
+    return true if Sale.active_now?(sale)
+    return false if user.blank?
+
+    orders.kept.exists?(user_id: user.id)
+  end
+
+  def reservable_by?(user:)
+    return false if user.blank?
+    return false unless viewable_by?(user: user)
+    return false unless sale.shop? || Sale.active_now?(sale)
+
+    status == "available"
+  end
+
   def to_api_hash(include_price: true)
     h = {
       id: id,

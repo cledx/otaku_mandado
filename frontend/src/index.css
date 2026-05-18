@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/* Item view: one slow, constant front→back→front spin, then rests on the front face. */
+@keyframes item-case-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-item-case-spin {
+  animation: item-case-spin 10s linear 1 forwards;
+  transform-style: preserve-3d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-item-case-spin {
+    animation: none;
+    transform: none;
+  }
+}
+
 @theme {
   --color-brand-lavender: #f1e4e8;
   --color-brand-alabaster: #e2dcde;
