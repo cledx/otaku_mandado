@@ -12,17 +12,13 @@ export default function Navbar() {
   const [signedIn, setSignedIn] = useState(() => Boolean(getAuthToken()))
   const [signedInLabel, setSignedInLabel] = useState('hidden')
   const [loggingOut, setLoggingOut] = useState(false)
-  const { links, applyUser } = useNavbarNav(signedIn)
+  const { links } = useNavbarNav(signedIn)
 
   const closeLogin = useCallback(() => setLoginOpen(false), [])
-  const handleLoginSuccess = useCallback(
-    (user) => {
-      setSignedIn(true)
-      setSignedInLabel('visible')
-      applyUser(user)
-    },
-    [applyUser],
-  )
+  const handleLoginSuccess = useCallback(() => {
+    // Full reload so sale pages, nav links, and admin UI re-fetch for the new role.
+    window.location.reload()
+  }, [])
 
   useEffect(() => {
     if (signedInLabel !== 'visible') return
