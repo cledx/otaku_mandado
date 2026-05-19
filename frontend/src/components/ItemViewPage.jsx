@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createOrder, fetchItemPage, fetchNavContext, getAuthToken } from '../api'
 import ItemDetailPanel from './item/ItemDetailPanel'
 import ItemDisplayCase from './item/ItemDisplayCase'
@@ -20,6 +20,7 @@ export default function ItemViewPage({ saleId, itemId }) {
   const [reserving, setReserving] = useState(false)
   const [reserveError, setReserveError] = useState(null)
   const [reserveSuccess, setReserveSuccess] = useState(false)
+  const pendingReserveRef = useRef(false)
 
   const reload = useCallback(async () => {
     try {
@@ -84,18 +85,22 @@ export default function ItemViewPage({ saleId, itemId }) {
   const item = payload?.item
   const imageUrl = item?.image_urls?.[0]
   const backImageUrl = item?.image_urls?.[1]
+  const ordered = Boolean(payload?.ordered_by_current_user)
+
+  // Reserve button shows whenever the item is reservable in principle (shop or active drop, status available).
+  // Guests still see it — clicking opens the login modal, then reserves on return.
+  const canPotentiallyReserve =
+    !!item &&
+    item.status === 'available' &&
+    (Boolean(payload?.sale?.shop) || Boolean(payload?.sale?.active_now)) &&
+    !ordered
 
   const handleItemUpdated = (updated) => {
     setPayload((prev) => (prev ? { ...prev, item: updated } : prev))
   }
 
-  const handleReserve = async () => {
-    if (!getAuthToken()) {
-      setLoginOpen(true)
-      return
-    }
-    if (!payload?.reservable || !item) return
-
+  const submitReserve = useCallback(async () => {
+    if (!item) return
     setReserving(true)
     setReserveError(null)
     setReserveSuccess(false)
@@ -108,10 +113,37 @@ export default function ItemViewPage({ saleId, itemId }) {
     } finally {
       setReserving(false)
     }
+  }, [item, reload])
+
+  const handleReserve = () => {
+    if (!getAuthToken()) {
+      pendingReserveRef.current = true
+      setReserveError(null)
+      setLoginOpen(true)
+      return
+    }
+    if (!canPotentiallyReserve) return
+    void submitReserve()
   }
 
-  const handleLoginSuccess = () => {
-    window.location.reload()
+  const handleLoginSuccess = async () => {
+    setLoginOpen(false)
+    try {
+      const ctx = await fetchNavContext()
+      setIsAdmin(ctx.role === 'admin')
+    } catch {
+      setIsAdmin(false)
+    }
+    await reload()
+    if (pendingReserveRef.current) {
+      pendingReserveRef.current = false
+      await submitReserve()
+    }
+  }
+
+  const handleLoginClose = () => {
+    pendingReserveRef.current = false
+    setLoginOpen(false)
   }
 
   return (
@@ -147,10 +179,10 @@ export default function ItemViewPage({ saleId, itemId }) {
                   saleId={saleId}
                   saleShop={Boolean(payload?.sale?.shop)}
                   isAdmin={isAdmin}
-                  reservable={Boolean(payload?.reservable)}
-                  ordered={Boolean(payload?.ordered_by_current_user)}
+                  reservable={canPotentiallyReserve}
+                  ordered={ordered}
                   onItemUpdated={handleItemUpdated}
-                  onReserve={() => void handleReserve()}
+                  onReserve={handleReserve}
                   reserving={reserving}
                   reserveError={reserveError}
                   reserveSuccess={reserveSuccess}
@@ -163,8 +195,8 @@ export default function ItemViewPage({ saleId, itemId }) {
 
       <LoginModal
         open={loginOpen}
-        onClose={() => setLoginOpen(false)}
-        onSuccess={handleLoginSuccess}
+        onClose={handleLoginClose}
+        onSuccess={() => void handleLoginSuccess()}
       />
     </div>
   )

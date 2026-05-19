@@ -18,9 +18,11 @@ class Order < ApplicationRecord
 
   before_validation :assign_order_number, on: :create
   after_create :finalize_order_number
+  after_create_commit :mark_item_reserved
 
   validates :status, inclusion: { in: STATUSES }
   validates :order_number, presence: true
+  validate :no_duplicate_active_order_for_user_item, on: :create
 
   def to_api_hash(include_item: true)
     h = {
@@ -39,6 +41,24 @@ class Order < ApplicationRecord
   end
 
   private
+
+  # Reserve the item the moment an order is placed so it can't be re-reserved.
+  # Leaves "purchased" untouched; only flips "available" to "reserved".
+  def mark_item_reserved
+    return unless item&.status == "available"
+
+    item.update_columns(status: "reserved", updated_at: Time.current)
+  end
+
+  def no_duplicate_active_order_for_user_item
+    return if user_id.blank? || item_id.blank?
+
+    scope = self.class.kept.where(user_id: user_id, item_id: item_id)
+    scope = scope.where.not(id: id) if id.present?
+    if scope.exists?
+      errors.add(:base, "You already have an order for this item")
+    end
+  end
 
   # TMP-* placeholder until after_create; then replaced with ORD-{date}-{user_id}-{id}.
   # Reuses an existing pending order_number so one checkout groups multiple line items.

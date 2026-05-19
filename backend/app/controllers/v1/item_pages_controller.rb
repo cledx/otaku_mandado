@@ -20,7 +20,12 @@ module V1
       render json: {
         data: {
           item: item.to_api_hash(include_price: include_price),
-          sale: { id: sale.id, name: sale.name, shop: sale.shop? },
+          sale: {
+            id: sale.id,
+            name: sale.name,
+            shop: sale.shop?,
+            active_now: Sale.active_now?(sale)
+          },
           reservable: item.reservable_by?(user: user),
           ordered_by_current_user: ordered_by_user?(item, user)
         }
