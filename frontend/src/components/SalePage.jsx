@@ -116,12 +116,12 @@ export default function SalePage({ saleId, mode = 'id' }) {
     return mergeAdminItems(pageData, saleIdForReload)
   }
 
-  const handleStartIn10Minutes = async () => {
+  const rescheduleStart = async (startTimeMs) => {
     if (!resolvedId) return
     setReschedulingStart(true)
     setRescheduleError(null)
     try {
-      const startTime = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      const startTime = new Date(startTimeMs).toISOString()
       await updateSale(resolvedId, { start_time: startTime })
       setPayload(await reloadSalePage(resolvedId))
     } catch (e) {
@@ -130,6 +130,9 @@ export default function SalePage({ saleId, mode = 'id' }) {
       setReschedulingStart(false)
     }
   }
+
+  const handleStartIn10Minutes = () => rescheduleStart(Date.now() + 10 * 60 * 1000)
+  const handleStartNow = () => rescheduleStart(Date.now())
 
   // #current-sale and #upcoming-sale: map nav_context booleans to a concrete sale id.
   useEffect(() => {
@@ -311,16 +314,26 @@ export default function SalePage({ saleId, mode = 'id' }) {
                   {rescheduleError}
                 </p>
               ) : null}
-              <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex flex-wrap items-start justify-end gap-3">
                 {isUpcomingPage ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleStartIn10Minutes()}
-                    disabled={reschedulingStart}
-                    className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {reschedulingStart ? 'Updating…' : 'Start in 10 minutes'}
-                  </button>
+                  <div className="flex flex-col items-stretch gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleStartIn10Minutes()}
+                      disabled={reschedulingStart}
+                      className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reschedulingStart ? 'Updating…' : 'Start in 10 minutes'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleStartNow()}
+                      disabled={reschedulingStart}
+                      className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reschedulingStart ? 'Updating…' : 'Start now'}
+                    </button>
+                  </div>
                 ) : null}
                 <button
                   type="button"
