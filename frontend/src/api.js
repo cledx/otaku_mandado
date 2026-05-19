@@ -68,6 +68,34 @@ export function createOrder(itemId) {
   })
 }
 
+/**
+ * Lists orders for the View Orders / Your Orders page.
+ * Admins receive every user's orders (each includes a `user` field); clients receive only their own.
+ */
+export function fetchOrders() {
+  return authFetch('/v1/orders')
+}
+
+/**
+ * Updates a single order's fulfillment status. Admins can update any order;
+ * clients can only update their own (enforced server-side).
+ */
+export function updateOrderStatus(orderId, status) {
+  return authFetch(`/v1/orders/${orderId}`, {
+    method: 'PATCH',
+    body: { order: { status } },
+  })
+}
+
+/**
+ * Soft-deletes a single order line. The backing item stays in place; if no
+ * other kept orders hold it, the server flips it back to "available" so it
+ * can be reserved again.
+ */
+export function deleteOrder(orderId) {
+  return authFetch(`/v1/orders/${orderId}`, { method: 'DELETE' })
+}
+
 /** Persistent shop catalog (sale named "Shop"; GET /v1/shop_sale). */
 export async function fetchShopSalePage() {
   const res = await fetch(`${API_BASE}/v1/shop_sale`)

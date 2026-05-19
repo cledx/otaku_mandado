@@ -19,12 +19,13 @@ class Order < ApplicationRecord
   before_validation :assign_order_number, on: :create
   after_create :finalize_order_number
   after_create_commit :mark_item_reserved
+  after_update_commit :free_item_if_discarded
 
   validates :status, inclusion: { in: STATUSES }
   validates :order_number, presence: true
   validate :no_duplicate_active_order_for_user_item, on: :create
 
-  def to_api_hash(include_item: true)
+  def to_api_hash(include_item: true, include_user: false)
     h = {
       id: id,
       user_id: user_id,
@@ -36,6 +37,7 @@ class Order < ApplicationRecord
       updated_at: updated_at
     }
     h[:item] = item&.to_api_hash if include_item
+    h[:user] = { id: user.id, email: user.email } if include_user && user
 
     h
   end
@@ -48,6 +50,18 @@ class Order < ApplicationRecord
     return unless item&.status == "available"
 
     item.update_columns(status: "reserved", updated_at: Time.current)
+  end
+
+  # When an order is soft-discarded (admin cancels), release the item so someone
+  # else can reserve it. Skip when the item was already sold or another kept
+  # order still holds it. Mirrors mark_item_reserved (never touches "purchased").
+  def free_item_if_discarded
+    return unless saved_change_to_deleted_at?
+    return if deleted_at.nil? # only on discard, not restore
+    return unless item&.status == "reserved"
+    return if item.orders.kept.exists?
+
+    item.update_columns(status: "available", updated_at: Time.current)
   end
 
   def no_duplicate_active_order_for_user_item

@@ -1,13 +1,24 @@
 # frozen_string_literal: true
 
 module V1
-  # Current user's orders only (scoped in set_order and index).
+  # Clients see/modify only their own orders; admins act on every user's orders
+  # (View Orders page can advance fulfillment status).
   class OrdersController < BaseController
     before_action :set_order, only: %i[show edit update destroy]
 
+    # Admins see every user's orders (View Orders page); clients see only their own.
     def index
-      @orders = current_user.orders.kept.includes(:item).order(created_at: :desc)
-      render json: { data: @orders.map { |o| o.to_api_hash(include_item: true) } }
+      include_user = current_user.role == "admin"
+      scope =
+        if include_user
+          Order.kept.includes(:item, :user).order(created_at: :desc)
+        else
+          current_user.orders.kept.includes(:item).order(created_at: :desc)
+        end
+
+      render json: {
+        data: scope.map { |o| o.to_api_hash(include_item: true, include_user: include_user) }
+      }
     end
 
     def show
@@ -36,7 +47,8 @@ module V1
 
     def update
       if @order.update(order_update_params)
-        render json: { data: @order.to_api_hash(include_item: true) }
+        include_user = current_user.role == "admin"
+        render json: { data: @order.to_api_hash(include_item: true, include_user: include_user) }
       else
         render json: { errors: @order.errors.full_messages }, status: :unprocessable_entity
       end
@@ -50,7 +62,8 @@ module V1
     private
 
     def set_order
-      @order = current_user.orders.kept.find(params[:id])
+      scope = current_user.role == "admin" ? Order.kept : current_user.orders.kept
+      @order = scope.find(params[:id])
     end
 
     def order_create_params
