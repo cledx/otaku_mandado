@@ -50,8 +50,20 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-brand-thistle/60 bg-brand-lavender/92 shadow-[0_1px_0_rgba(45,45,52,0.06)] backdrop-blur-md">
-        <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-end gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
+      <header className="fixed inset-x-0 top-0 z-50 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-brand-thistle/60 bg-brand-lavender/92 py-3 pl-1 pr-4 shadow-[0_1px_0_rgba(45,45,52,0.06)] backdrop-blur-md sm:pl-2 sm:pr-6">
+        <a
+          href="#"
+          aria-label="Otaku Mandado home"
+          className="inline-flex shrink-0 rounded-full transition-opacity hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-dusty focus-visible:ring-offset-2 focus-visible:ring-offset-brand-lavender"
+        >
+          <img
+            src="/assets/logo.png"
+            alt="Otaku Mandado"
+            className="h-10 w-10 rounded-full object-cover sm:h-11 sm:w-11"
+          />
+        </a>
+
+        <nav className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           {signedIn ? (
             <>
               {signedInLabel !== 'hidden' ? (

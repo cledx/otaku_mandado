@@ -8,7 +8,10 @@ module V1
 
     def index
       pending_user_ids = Order.kept.where(status: "pending").distinct.pluck(:user_id).to_set
-      pending_counts = Order.kept.where(status: "pending").group(:user_id).count
+      # Count distinct order_numbers, not Order rows: a single pending checkout
+      # groups multiple line items under one shared order_number, so grouping by
+      # user alone would overcount (3-item cart would read as "3 pending orders").
+      pending_counts = Order.kept.where(status: "pending").group(:user_id).distinct.count(:order_number)
 
       accounts = User.order(:email).map do |user|
         {
