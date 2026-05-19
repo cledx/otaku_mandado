@@ -48,7 +48,9 @@ end
 
 [
   ["admin@example.com", "admin"],
-  ["client@example.com", "client"],
+  ["client1@example.com", "client"],
+  ["client2@example.com", "client"],
+  ["client3@example.com", "client"]
 ].each do |email, role|
   user = User.find_or_initialize_by(email: email)
   user.password = "password" if user.new_record?
