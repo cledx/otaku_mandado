@@ -4,8 +4,9 @@
 
 # Fixture sale for local AI/item upload testing (see ProcessImageMetadataService).
 
-Sale.destroy_all
-Item.destroy_all
+Order.delete_all
+Item.delete_all
+Sale.delete_all
 
 sale = Sale.new(name: "Seed Sale")
 sale.start_time = 2.days.from_now.change(hour: 12, min: 0)
@@ -26,25 +27,9 @@ TEXT
     description: SEED_ITEM_DESCRIPTION,
     price: 1000 + (i % 41) * 100,
     image: [SEED_ITEM_IMAGE],
-    status: Item::STATUSES.sample
+    status: "available"
   )
 end
-
-# Persistent catalog (Browse Shop); items appear on the landing-page carousel.
-shop = Sale.find_or_initialize_by(name: Sale::SHOP_NAME)
-shop.save! if shop.new_record?
-
-8.times do |i|
-  shop.items.create!(
-    name: "Shop Item #{i + 1}",
-    brand: "Brand Name",
-    description: SEED_ITEM_DESCRIPTION,
-    price: 2500 + (i % 17) * 150,
-    image: [SEED_ITEM_IMAGE],
-    status: Item::STATUSES.sample
-  )
-end
-
 
 [
   ["admin@example.com", "admin"],
@@ -56,4 +41,31 @@ end
   user.password = "password" if user.new_record?
   user.role = role
   user.save!
+end
+
+# Persistent catalog (Browse Shop); items appear on the landing-page carousel.
+shop = Sale.find_or_initialize_by(name: Sale::SHOP_NAME)
+shop.save! if shop.new_record?
+
+client_users = User.where(role: "client").to_a
+
+12.times do |i|
+  target_status = Item::STATUSES.sample
+
+  item = shop.items.create!(
+    name: "Shop Item #{i + 1}",
+    brand: "Brand Name",
+    description: SEED_ITEM_DESCRIPTION,
+    price: 2500 + (i % 17) * 150,
+    image: [SEED_ITEM_IMAGE],
+    status: "available"
+  )
+
+  next if target_status == "available" || client_users.empty?
+
+  # Non-available shop items belong to a random client via a random order.
+  # Order's after_create_commit flips the item from "available" to "reserved";
+  # bump it to "purchased" afterwards when that's the intended final state.
+  Order.create!(user: client_users.sample, item: item, status: "pending")
+  item.update_columns(status: "purchased", updated_at: Time.current) if target_status == "purchased"
 end
