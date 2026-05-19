@@ -98,8 +98,9 @@ export function deleteOrder(orderId) {
 
 /**
  * Lists every registered account (admin only). Each entry includes `pending_orders`
- * (boolean) and `pending_orders_count` so the View Accounts page can flag users
- * with outstanding orders to follow up on.
+ * (boolean), `pending_orders_count`, and `total_spent` (MXN, credited as orders
+ * flip to "payment fulfilled") so the View Accounts page can flag users with
+ * outstanding orders and surface their lifetime spend.
  */
 export function fetchAccounts() {
   return authFetch('/v1/accounts')

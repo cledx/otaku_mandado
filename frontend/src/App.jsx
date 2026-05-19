@@ -5,6 +5,7 @@ import LandingPage from './components/LandingPage'
 import OrdersPage from './components/OrdersPage'
 import ScheduleSalePage from './components/ScheduleSalePage'
 import SalePage from './components/SalePage'
+import Footer from './components/layout/Footer'
 import { parseAppRoute } from './utils/hashRoute'
 
 /**
@@ -24,27 +25,27 @@ function App() {
     }
   }, [])
 
+  let page
   if (route.page === 'item') {
-    return <ItemViewPage saleId={route.saleId} itemId={route.itemId} />
+    page = <ItemViewPage saleId={route.saleId} itemId={route.itemId} />
+  } else if (route.page === 'sale') {
+    page = <SalePage saleId={route.saleId} mode={route.mode} />
+  } else if (route.page === 'schedule-sale') {
+    page = <ScheduleSalePage />
+  } else if (route.page === 'orders') {
+    page = <OrdersPage mode={route.mode} />
+  } else if (route.page === 'accounts') {
+    page = <AccountsPage />
+  } else {
+    page = <LandingPage />
   }
 
-  if (route.page === 'sale') {
-    return <SalePage saleId={route.saleId} mode={route.mode} />
-  }
-
-  if (route.page === 'schedule-sale') {
-    return <ScheduleSalePage />
-  }
-
-  if (route.page === 'orders') {
-    return <OrdersPage mode={route.mode} />
-  }
-
-  if (route.page === 'accounts') {
-    return <AccountsPage />
-  }
-
-  return <LandingPage />
+  return (
+    <>
+      {page}
+      <Footer />
+    </>
+  )
 }
 
 export default App

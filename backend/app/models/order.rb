@@ -20,6 +20,7 @@ class Order < ApplicationRecord
   after_create :finalize_order_number
   after_create_commit :mark_item_reserved
   after_update_commit :free_item_if_discarded
+  after_update_commit :credit_user_total_spent
 
   validates :status, inclusion: { in: STATUSES }
   validates :order_number, presence: true
@@ -62,6 +63,24 @@ class Order < ApplicationRecord
     return if item.orders.kept.exists?
 
     item.update_columns(status: "available", updated_at: Time.current)
+  end
+
+  # Credit this line's MXN cost to the user's running total the moment an
+  # admin flips it to "payment fulfilled". Fires on every transition into
+  # that status, so re-marking a previously-fulfilled line will re-credit;
+  # that's the literal "whenever it's marked Payment Fulfilled" behavior.
+  # update_all keeps the increment atomic across concurrent line updates
+  # (the View Orders page can bulk-update an entire order in parallel).
+  def credit_user_total_spent
+    return unless saved_change_to_status?
+    return unless status == "payment fulfilled"
+    return if user_id.blank?
+
+    amount = item&.mx_price.to_f
+    return if amount.zero?
+
+    User.where(id: user_id)
+        .update_all(["total_spent = COALESCE(total_spent, 0) + ?", amount])
   end
 
   def no_duplicate_active_order_for_user_item

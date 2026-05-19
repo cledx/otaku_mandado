@@ -17,7 +17,8 @@ module V1
           role: user.role,
           created_at: user.created_at,
           pending_orders: pending_user_ids.include?(user.id),
-          pending_orders_count: pending_counts[user.id] || 0
+          pending_orders_count: pending_counts[user.id] || 0,
+          total_spent: user.total_spent.to_f
         }
       end
 
