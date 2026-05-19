@@ -96,6 +96,15 @@ export function deleteOrder(orderId) {
   return authFetch(`/v1/orders/${orderId}`, { method: 'DELETE' })
 }
 
+/**
+ * Lists every registered account (admin only). Each entry includes `pending_orders`
+ * (boolean) and `pending_orders_count` so the View Accounts page can flag users
+ * with outstanding orders to follow up on.
+ */
+export function fetchAccounts() {
+  return authFetch('/v1/accounts')
+}
+
 /** Persistent shop catalog (sale named "Shop"; GET /v1/shop_sale). */
 export async function fetchShopSalePage() {
   const res = await fetch(`${API_BASE}/v1/shop_sale`)

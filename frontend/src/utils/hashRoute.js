@@ -11,6 +11,7 @@ export function parseAppRoute() {
   if (hash === 'upcoming-sale') return { page: 'sale', mode: 'upcoming' }
   if (hash === 'view-orders') return { page: 'orders', mode: 'admin' }
   if (hash === 'your-orders') return { page: 'orders', mode: 'mine' }
+  if (hash === 'view-accounts') return { page: 'accounts' }
   const saleMatch = hash.match(/^sale-(\d+)$/)
   if (saleMatch) return { page: 'sale', mode: 'id', saleId: saleMatch[1] }
   return { page: 'landing' }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AccountsPage from './components/AccountsPage'
 import ItemViewPage from './components/ItemViewPage'
 import LandingPage from './components/LandingPage'
 import OrdersPage from './components/OrdersPage'
@@ -8,7 +9,7 @@ import { parseAppRoute } from './utils/hashRoute'
 
 /**
  * Hash-based routing until react-router is added.
- * Navbar and landing CTAs use #current-sale, #upcoming-sale, #schedule-sale, #browse-shop, #view-orders, #your-orders, #sale-{id}, and #item-{saleId}-{itemId}.
+ * Navbar and landing CTAs use #current-sale, #upcoming-sale, #schedule-sale, #browse-shop, #view-orders, #your-orders, #view-accounts, #sale-{id}, and #item-{saleId}-{itemId}.
  */
 function App() {
   const [route, setRoute] = useState(() => parseAppRoute())
@@ -37,6 +38,10 @@ function App() {
 
   if (route.page === 'orders') {
     return <OrdersPage mode={route.mode} />
+  }
+
+  if (route.page === 'accounts') {
+    return <AccountsPage />
   }
 
   return <LandingPage />

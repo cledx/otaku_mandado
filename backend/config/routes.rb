@@ -30,6 +30,8 @@ Rails.application.routes.draw do
     end
 
     resources :orders, only: %i[index show new create edit update destroy] # current_user scoped
+
+    resources :accounts, only: %i[index] # admin only (see AccountsController)
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
