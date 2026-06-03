@@ -167,6 +167,7 @@ export default function OrdersPage({ mode = 'mine' }) {
                   orderNumber={orderNumber}
                   lines={lines}
                   showUser={showUser}
+                  showOrderTotal={isAdminView}
                   editable={canEditStatus}
                   onLineStatusChange={handleLineStatusChange}
                   onLineDelete={canEditStatus ? handleLineDelete : undefined}

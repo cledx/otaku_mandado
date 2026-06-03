@@ -71,6 +71,7 @@ function formatDate(iso) {
  *   orderNumber: string,
  *   lines: object[],
  *   showUser?: boolean,
+ *   showOrderTotal?: boolean,
  *   editable?: boolean,
  *   onLineStatusChange?: (orderId: number, nextStatus: string) => Promise<void> | void,
  *   onLineDelete?: (orderId: number) => Promise<void> | void,
@@ -81,6 +82,7 @@ export default function OrderGroupCard({
   orderNumber,
   lines,
   showUser = false,
+  showOrderTotal = false,
   editable = false,
   onLineStatusChange,
   onLineDelete,
@@ -106,6 +108,16 @@ export default function OrderGroupCard({
   const groupStatus = uniqueStatuses.length === 1 ? uniqueStatuses[0] : null
 
   const userEmail = showUser ? lines.find((l) => l.user?.email)?.user?.email : null
+
+  const orderTotalMx = showOrderTotal
+    ? lines.reduce((sum, line) => {
+        const price = line.item?.mx_price
+        const numeric = typeof price === 'number' ? price : Number(price)
+        return sum + (Number.isFinite(numeric) ? numeric : 0)
+      }, 0)
+    : null
+  const orderTotalLabel =
+    showOrderTotal && orderTotalMx != null ? formatPriceMx(orderTotalMx) : null
 
   const openItem = (line) => {
     const saleId = line.item?.sale_id
@@ -174,6 +186,11 @@ export default function OrderGroupCard({
               <span>
                 {lines.length} {lines.length === 1 ? 'item' : 'items'}
               </span>
+              {orderTotalLabel ? (
+                <span className="font-semibold text-brand-shadow/85">
+                  Total {orderTotalLabel}
+                </span>
+              ) : null}
             </div>
           </div>
 
