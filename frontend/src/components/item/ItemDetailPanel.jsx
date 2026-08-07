@@ -1,6 +1,12 @@
 import { useEffect, useId, useState } from 'react'
 import { deleteItem, updateItem } from '../../api'
 import { setAppHash } from '../../utils/hashRoute'
+import {
+  cloudinaryPreviewUrl,
+  isCloudinaryConfigured,
+  loadCloudinaryWidgetScript,
+  openCloudinarySingleUpload,
+} from '../../utils/cloudinaryUpload'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import EditablePrice, { formatMxPrice } from '../sale/EditablePrice'
 
@@ -19,6 +25,27 @@ function ReadOnlyRow({ label, value }) {
       <span className="font-semibold">{label}:</span>{' '}
       <span className="font-normal">{value || '—'}</span>
     </p>
+  )
+}
+
+function ImageSlotPreview({ url, label }) {
+  if (!url) {
+    return (
+      <div
+        className="mx-auto flex aspect-square w-28 items-center justify-center rounded-lg bg-white/15 sm:w-32"
+        aria-label={`${label}: no image`}
+      >
+        <span className="text-xs text-white/60">No image</span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={url}
+      alt={label}
+      className="mx-auto aspect-square w-28 rounded-lg object-cover sm:w-32"
+    />
   )
 }
 
@@ -46,6 +73,8 @@ export default function ItemDetailPanel({
     status: 'reserved',
     imageFront: '',
     imageBack: '',
+    previewFront: '',
+    previewBack: '',
   })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -53,9 +82,15 @@ export default function ItemDetailPanel({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [widgetReady, setWidgetReady] = useState(false)
+  const [uploadingSlot, setUploadingSlot] = useState(null)
+  const [uploadError, setUploadError] = useState(null)
+
+  const cloudinaryConfigured = isCloudinaryConfigured()
 
   useEffect(() => {
     const ids = Array.isArray(item?.image) ? item.image : []
+    const urls = Array.isArray(item?.image_urls) ? item.image_urls : []
     setDraft({
       name: item?.name ?? '',
       brand: item?.brand ?? '',
@@ -63,13 +98,79 @@ export default function ItemDetailPanel({
       status: item?.status ?? 'reserved',
       imageFront: ids[0] ?? '',
       imageBack: ids[1] ?? '',
+      previewFront: urls[0] ?? cloudinaryPreviewUrl(ids[0]) ?? '',
+      previewBack: urls[1] ?? cloudinaryPreviewUrl(ids[1]) ?? '',
     })
     setSaveSuccess(false)
     setSaveError(null)
+    setUploadError(null)
   }, [item])
+
+  useEffect(() => {
+    if (!isAdmin || !cloudinaryConfigured) {
+      setWidgetReady(false)
+      return
+    }
+
+    let cancelled = false
+    setWidgetReady(false)
+
+    loadCloudinaryWidgetScript()
+      .then(() => {
+        if (!cancelled) setWidgetReady(true)
+      })
+      .catch((e) => {
+        if (!cancelled) setUploadError(e.message)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAdmin, cloudinaryConfigured])
 
   const handleChange = (field) => (e) => {
     setDraft((prev) => ({ ...prev, [field]: e.target.value }))
+    setSaveSuccess(false)
+  }
+
+  const handleReplaceImage = (slot) => {
+    if (!cloudinaryConfigured) {
+      setUploadError('Cloudinary is not configured for this environment.')
+      return
+    }
+    if (!widgetReady) {
+      setUploadError('Upload widget is still loading. Please wait a moment.')
+      return
+    }
+
+    setUploadError(null)
+    setUploadingSlot(slot)
+
+    try {
+      openCloudinarySingleUpload({
+        onPublicId: (publicId, info) => {
+          const preview = info?.secure_url || cloudinaryPreviewUrl(publicId) || ''
+          setDraft((prev) =>
+            slot === 'front'
+              ? { ...prev, imageFront: publicId, previewFront: preview }
+              : { ...prev, imageBack: publicId, previewBack: preview },
+          )
+          setSaveSuccess(false)
+        },
+        onClose: () => setUploadingSlot(null),
+        onError: (err) => {
+          setUploadError(err?.message || 'Image upload failed.')
+          setUploadingSlot(null)
+        },
+      })
+    } catch (err) {
+      setUploadError(err.message)
+      setUploadingSlot(null)
+    }
+  }
+
+  const handleClearBack = () => {
+    setDraft((prev) => ({ ...prev, imageBack: '', previewBack: '' }))
     setSaveSuccess(false)
   }
 
@@ -154,6 +255,9 @@ export default function ItemDetailPanel({
     )
   }
 
+  const uploadBusy = uploadingSlot !== null
+  const replaceDisabled = !cloudinaryConfigured || !widgetReady || uploadBusy || saving
+
   return (
     <>
       <form id={formId} onSubmit={(e) => void handleSave(e)} className="space-y-4">
@@ -228,36 +332,74 @@ export default function ItemDetailPanel({
           />
         </div>
 
-        <div className="space-y-3 border-t border-white/25 pt-4">
+        <div className="space-y-4 border-t border-white/25 pt-4">
           <p className="text-center text-xs font-semibold uppercase tracking-wide text-white/80">
-            Images (Cloudinary public IDs)
+            Images
           </p>
-          <div>
-            <label htmlFor={`${formId}-img-front`} className="mb-1 block text-center text-xs text-white/90">
-              Front / spin face
-            </label>
-            <input
-              id={`${formId}-img-front`}
-              type="text"
-              value={draft.imageFront}
-              onChange={handleChange('imageFront')}
-              placeholder="folder/asset"
-              className={inputClass}
-            />
+
+          {!cloudinaryConfigured ? (
+            <p className="text-center text-sm text-brand-lavender" role="alert">
+              Cloudinary is not configured. Set{' '}
+              <code className="text-xs">VITE_CLOUDINARY_CLOUD_NAME</code> and{' '}
+              <code className="text-xs">VITE_CLOUDINARY_UPLOAD_PRESET</code>.
+            </p>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-center text-xs text-white/90">Front / spin face</p>
+              <ImageSlotPreview url={draft.previewFront} label="Front image" />
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => handleReplaceImage('front')}
+                  disabled={replaceDisabled}
+                  className="rounded-full border border-white/80 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {uploadingSlot === 'front'
+                    ? 'Uploading…'
+                    : draft.imageFront
+                      ? 'New image'
+                      : 'Add image'}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-center text-xs text-white/90">Back / spin face</p>
+              <ImageSlotPreview url={draft.previewBack} label="Back image" />
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleReplaceImage('back')}
+                  disabled={replaceDisabled}
+                  className="rounded-full border border-white/80 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {uploadingSlot === 'back'
+                    ? 'Uploading…'
+                    : draft.imageBack
+                      ? 'New image'
+                      : 'Add image'}
+                </button>
+                {draft.imageBack ? (
+                  <button
+                    type="button"
+                    onClick={handleClearBack}
+                    disabled={uploadBusy || saving}
+                    className="rounded-full border border-white/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:bg-white/10 disabled:opacity-60"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor={`${formId}-img-back`} className="mb-1 block text-center text-xs text-white/90">
-              Back / spin face
-            </label>
-            <input
-              id={`${formId}-img-back`}
-              type="text"
-              value={draft.imageBack}
-              onChange={handleChange('imageBack')}
-              placeholder="folder/asset (optional)"
-              className={inputClass}
-            />
-          </div>
+
+          {uploadError ? (
+            <p className="text-center text-sm text-brand-lavender" role="alert">
+              {uploadError}
+            </p>
+          ) : null}
         </div>
 
         {saveError ? (
@@ -272,7 +414,7 @@ export default function ItemDetailPanel({
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadBusy}
             className="rounded-full border border-white bg-white px-6 py-2.5 text-sm font-semibold text-brand-dusty shadow-sm transition hover:bg-brand-lavender disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save changes'}

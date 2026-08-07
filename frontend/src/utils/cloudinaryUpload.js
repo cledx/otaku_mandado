@@ -74,11 +74,37 @@ export function loadCloudinaryWidgetScript() {
 }
 
 /**
- * Opens the Cloudinary bulk upload widget (call synchronously from a click handler).
- * @param {{ onPublicId: (id: string) => void, onQueueEnd?: () => void, onClose?: () => void, onError?: (err: unknown) => void }} handlers
+ * CDN preview URL for a public_id (unsigned delivery; no transform).
+ * @param {string} publicId
+ * @returns {string | null}
+ */
+export function cloudinaryPreviewUrl(publicId) {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  const id = typeof publicId === 'string' ? publicId.trim() : ''
+  if (!cloudName || !id) return null
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}`
+}
+
+/**
+ * Opens the Cloudinary upload widget (call synchronously from a click handler).
+ * @param {{
+ *   onPublicId: (id: string, info?: { secure_url?: string }) => void,
+ *   onQueueEnd?: () => void,
+ *   onClose?: () => void,
+ *   onError?: (err: unknown) => void,
+ *   multiple?: boolean,
+ *   maxFiles?: number,
+ * }} handlers
  * @returns {object} widget instance
  */
-export function openCloudinaryBulkUpload({ onPublicId, onQueueEnd, onClose, onError }) {
+function openCloudinaryUpload({
+  onPublicId,
+  onQueueEnd,
+  onClose,
+  onError,
+  multiple = true,
+  maxFiles = 50,
+}) {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
@@ -100,8 +126,8 @@ export function openCloudinaryBulkUpload({ onPublicId, onQueueEnd, onClose, onEr
       uploadPreset,
       folder,
       sources: ['local'],
-      multiple: true,
-      maxFiles: 50,
+      multiple,
+      maxFiles,
       clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
       showAdvancedOptions: false,
     },
@@ -113,7 +139,7 @@ export function openCloudinaryBulkUpload({ onPublicId, onQueueEnd, onClose, onEr
       if (!result) return
 
       if (result.event === 'success' && result.info?.public_id) {
-        onPublicId(result.info.public_id)
+        onPublicId(result.info.public_id, result.info)
       }
       if (result.event === 'queues-end') {
         onQueueEnd?.()
@@ -130,4 +156,22 @@ export function openCloudinaryBulkUpload({ onPublicId, onQueueEnd, onClose, onEr
 
   widget.open()
   return widget
+}
+
+/**
+ * Opens the Cloudinary bulk upload widget (call synchronously from a click handler).
+ * @param {{ onPublicId: (id: string) => void, onQueueEnd?: () => void, onClose?: () => void, onError?: (err: unknown) => void }} handlers
+ * @returns {object} widget instance
+ */
+export function openCloudinaryBulkUpload(handlers) {
+  return openCloudinaryUpload({ ...handlers, multiple: true, maxFiles: 50 })
+}
+
+/**
+ * Opens a single-file Cloudinary upload widget (call synchronously from a click handler).
+ * @param {{ onPublicId: (id: string, info?: { secure_url?: string }) => void, onClose?: () => void, onError?: (err: unknown) => void }} handlers
+ * @returns {object} widget instance
+ */
+export function openCloudinarySingleUpload(handlers) {
+  return openCloudinaryUpload({ ...handlers, multiple: false, maxFiles: 1 })
 }
