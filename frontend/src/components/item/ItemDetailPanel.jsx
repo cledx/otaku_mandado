@@ -116,7 +116,7 @@ export default function ItemDetailPanel({
         <div className="space-y-3">
           <ReadOnlyRow label="Item" value={item.name} />
           <ReadOnlyRow label="Brand" value={item.brand} />
-          <ReadOnlyRow label="Character" value={item.description} />
+          <ReadOnlyRow label="Description" value={item.description} />
           <ReadOnlyRow label="Price" value={formatMxPrice(item.mx_price)} />
         </div>
 
