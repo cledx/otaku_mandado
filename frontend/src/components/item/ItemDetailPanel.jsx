@@ -188,7 +188,7 @@ export default function ItemDetailPanel({
             htmlFor={`${formId}-description`}
             className="mb-1 block text-center text-sm font-semibold text-white"
           >
-            Character
+            Description
           </label>
           <textarea
             id={`${formId}-description`}
