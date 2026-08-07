@@ -63,9 +63,10 @@ function formatDate(iso) {
  * Single order group (rows that share an order_number). Header summarizes the order;
  * each row shows one item and its individual fulfillment status. When `editable`,
  * status pills become dropdowns (per-row updates one line; header pill bulk-
- * updates every line) and delete controls appear: a row-level trash icon
- * cancels just that line, the header "Cancel order" button cancels the whole
- * group. Cancelling an order frees the item — it does NOT delete the item.
+ * updates every line). Cancel controls appear whenever delete handlers are
+ * provided (independent of `editable`): a per-line "Unreserve" button cancels
+ * just that line, the header "Cancel order" button cancels the whole group.
+ * Cancelling an order frees the item — it does NOT delete the item.
  *
  * @param {{
  *   orderNumber: string,
@@ -106,6 +107,7 @@ export default function OrderGroupCard({
 
   const uniqueStatuses = Array.from(new Set(lines.map((l) => l.status).filter(Boolean)))
   const groupStatus = uniqueStatuses.length === 1 ? uniqueStatuses[0] : null
+  const allLinesPending = lines.length > 0 && lines.every((l) => l.status === 'pending')
 
   const userEmail = showUser ? lines.find((l) => l.user?.email)?.user?.email : null
 
@@ -208,7 +210,7 @@ export default function OrderGroupCard({
                 Mixed statuses — update each item below
               </p>
             )}
-            {editable && onGroupDelete ? (
+            {onGroupDelete && allLinesPending ? (
               <button
                 type="button"
                 onClick={() => {
@@ -277,18 +279,18 @@ export default function OrderGroupCard({
                       ariaLabel={`Change status for ${item?.name || 'item'}`}
                       onChange={(next) => onLineStatusChange?.(line.id, next)}
                     />
-                    {editable && onLineDelete ? (
+                    {onLineDelete && line.status === 'pending' ? (
                       <button
                         type="button"
-                        aria-label={`Cancel ${item?.name || 'item'} from this order`}
-                        title="Cancel this item from the order (frees it for others)"
+                        aria-label={`Unreserve ${item?.name || 'item'}`}
+                        title="Unreserve this item (frees it for others)"
                         onClick={() => {
                           setLineError(null)
                           setLineConfirm({ id: line.id, name: item?.name || 'this item' })
                         }}
-                        className="flex size-8 items-center justify-center rounded-full border border-brand-thistle/80 bg-white text-brand-dusty transition hover:border-brand-dusty hover:bg-brand-dusty/10"
+                        className="inline-flex items-center rounded-full border border-brand-thistle/80 bg-white px-3 py-1 text-xs font-semibold text-brand-dusty transition hover:border-brand-dusty hover:bg-brand-dusty/10"
                       >
-                        <DeleteIcon />
+                        Unreserve
                       </button>
                     ) : null}
                   </div>
@@ -321,14 +323,14 @@ export default function OrderGroupCard({
 
       <ConfirmDialog
         open={Boolean(lineConfirm)}
-        title="Remove this item from the order?"
+        title="Unreserve this item?"
         message={
           lineError
             ? `${lineError} Try again, or cancel to close.`
-            : `Remove “${lineConfirm?.name ?? 'this item'}” from order ${orderNumber}? The item will be released back to the shop so it can be reserved again. The item itself is not deleted.`
+            : `Unreserve “${lineConfirm?.name ?? 'this item'}” from order ${orderNumber}? The item will be released back to the shop so it can be reserved again.`
         }
-        confirmLabel="Remove item"
-        cancelLabel="Keep item"
+        confirmLabel="Unreserve"
+        cancelLabel="Keep reserved"
         confirming={lineDeleting}
         onClose={() => {
           if (!lineDeleting) {

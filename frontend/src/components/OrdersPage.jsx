@@ -82,6 +82,9 @@ export default function OrdersPage({ mode = 'mine' }) {
   const showUser = authState === 'admin'
   const isAdminView = mode === 'admin'
   const canEditStatus = authState === 'admin' && isAdminView
+  // Clients on Your Orders (and admins on View Orders) can cancel lines / whole
+  // groups; status editing stays admin-only.
+  const canCancel = (authState === 'client' && !isAdminView) || canEditStatus
   const groups = useMemo(() => (orders ? groupByOrderNumber(orders) : []), [orders])
 
   // Optimistic-friendly merge: server returns the canonical order, but we keep
@@ -118,7 +121,7 @@ export default function OrdersPage({ mode = 'mine' }) {
   const heading = isAdminView ? 'View Orders' : 'Your Orders'
   const subhead = isAdminView
     ? 'Every client order, grouped by order number, with the current fulfillment status per item.'
-    : 'Your reservations and purchases, grouped by order number with the latest status of each item.'
+    : 'Your reservations and purchases, grouped by order number. Unreserve an item anytime to release it back to the shop.'
 
   return (
     <div className="relative min-h-svh w-full bg-brand-shadow text-brand-shadow">
@@ -169,9 +172,9 @@ export default function OrdersPage({ mode = 'mine' }) {
                   showUser={showUser}
                   showOrderTotal={isAdminView}
                   editable={canEditStatus}
-                  onLineStatusChange={handleLineStatusChange}
-                  onLineDelete={canEditStatus ? handleLineDelete : undefined}
-                  onGroupDelete={canEditStatus ? handleGroupDelete : undefined}
+                  onLineStatusChange={canEditStatus ? handleLineStatusChange : undefined}
+                  onLineDelete={canCancel ? handleLineDelete : undefined}
+                  onGroupDelete={canCancel ? handleGroupDelete : undefined}
                 />
               </li>
             ))}
