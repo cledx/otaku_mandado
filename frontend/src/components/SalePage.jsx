@@ -77,7 +77,7 @@ function formatQuickShiftLabel(minutes) {
  *
  * Admin tools on this page:
  * - Item Upload modal
- * - Quick start ("Start in 10 minutes" / "Start now") on Upcoming only
+ * - Quick start ("Start now") on Upcoming only
  * - Edit Timer modal (start/end + nudge chips); duration recomputed from end − start
  *
  * Sale data is polled every 60s; the countdown ticks every 1s.
@@ -199,7 +199,6 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }
 
-  const handleStartIn10Minutes = () => rescheduleStart(Date.now() + 10 * 60 * 1000)
   const handleStartNow = () => rescheduleStart(Date.now())
 
   /** Seeds the Edit Timer drafts from the current payload and opens the modal. */
@@ -444,24 +443,14 @@ export default function SalePage({ saleId, mode = 'id' }) {
                 ) : null}
                 <div className="flex items-start justify-end gap-3">
                   {isUpcomingPage ? (
-                    <div className="flex flex-col items-stretch gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleStartIn10Minutes()}
-                        disabled={reschedulingStart}
-                        className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {reschedulingStart ? 'Updating…' : 'Start in 10 minutes'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleStartNow()}
-                        disabled={reschedulingStart}
-                        className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {reschedulingStart ? 'Updating…' : 'Start now'}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleStartNow()}
+                      disabled={reschedulingStart}
+                      className="rounded-full border border-brand-dusty bg-brand-lavender px-6 py-2.5 text-sm font-semibold text-brand-shadow shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reschedulingStart ? 'Updating…' : 'Start now'}
+                    </button>
                   ) : null}
                   <div className="flex flex-col items-stretch gap-2">
                     <button
