@@ -4,20 +4,31 @@ import AccountCard from './accounts/AccountCard'
 import PageBackground from './layout/PageBackground'
 import Navbar from './navbar/Navbar'
 
+/** Shared sales/orders/accounts backdrop from public/assets/backgrounds/. */
 const ACCOUNTS_BACKGROUND = '/assets/backgrounds/sales.png'
 
 /**
- * View Accounts (admin) page.
+ * View Accounts page (`#view-accounts`) — admin-only directory of registered users.
  *
- * Fetches /v1/accounts (admin-only) and renders one card per registered user.
- * Each card surfaces whether the user has pending orders so admins can chase
- * follow-ups without paging through the View Orders list.
+ * Fetches `GET /v1/accounts` and renders one `AccountCard` per user. Cards surface
+ * whether the account has pending orders so admins can chase follow-ups without
+ * paging through the View Orders list.
+ *
+ * Access gate:
+ * - guest → prompt to sign in
+ * - client → forbidden message
+ * - admin → account list (or empty / error states)
+ *
+ * Sort: accounts with `pending_orders` float to the top, then alphabetical by email.
  */
 export default function AccountsPage() {
+  // 'loading' | 'guest' | 'client' | 'admin'
   const [authState, setAuthState] = useState('loading')
+  // null = still loading accounts; [] = loaded empty; otherwise the API list.
   const [accounts, setAccounts] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
+  // Resolve role before attempting the admin-only accounts endpoint.
   useEffect(() => {
     if (!getAuthToken()) {
       setAuthState('guest')
@@ -39,6 +50,7 @@ export default function AccountsPage() {
     }
   }, [])
 
+  // Load accounts only after we know the viewer is an admin.
   useEffect(() => {
     if (authState !== 'admin') return undefined
 
@@ -74,6 +86,7 @@ export default function AccountsPage() {
     })
   }, [accounts])
 
+  // Used in the header summary line ("N with pending orders").
   const pendingCount = useMemo(
     () => (accounts ? accounts.filter((a) => a.pending_orders).length : 0),
     [accounts],
@@ -103,6 +116,7 @@ export default function AccountsPage() {
           ) : null}
         </header>
 
+        {/* Auth / load / empty / list states */}
         {authState === 'loading' ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">
             Checking access…

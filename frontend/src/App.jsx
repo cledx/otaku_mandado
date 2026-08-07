@@ -9,12 +9,25 @@ import Footer from './components/layout/Footer'
 import { parseAppRoute } from './utils/hashRoute'
 
 /**
- * Hash-based routing until react-router is added.
- * Navbar and landing CTAs use #current-sale, #upcoming-sale, #schedule-sale, #browse-shop, #view-orders, #your-orders, #view-accounts, #sale-{id}, and #item-{saleId}-{itemId}.
+ * Root shell: hash-based routing until react-router is added.
+ *
+ * `parseAppRoute()` maps `window.location.hash` to a `{ page, ... }` object.
+ * Supported hashes (navbar + landing CTAs):
+ * - `#` / empty → LandingPage
+ * - `#sale-{id}` → SalePage mode="id"
+ * - `#current-sale` / `#upcoming-sale` / `#browse-shop` → SalePage modes
+ * - `#schedule-sale` → ScheduleSalePage
+ * - `#view-orders` / `#your-orders` → OrdersPage (admin | mine)
+ * - `#view-accounts` → AccountsPage
+ * - `#item-{saleId}-{itemId}` → ItemViewPage
+ *
+ * Footer is rendered on every page; each page mounts its own Navbar.
  */
 function App() {
+  // Initial parse on mount; kept in sync via hashchange / popstate below.
   const [route, setRoute] = useState(() => parseAppRoute())
 
+  // Re-parse when the user navigates via hash links or browser back/forward.
   useEffect(() => {
     const syncRoute = () => setRoute(parseAppRoute())
     window.addEventListener('hashchange', syncRoute)
@@ -25,6 +38,7 @@ function App() {
     }
   }, [])
 
+  // Choose the page component from the parsed route (default: landing).
   let page
   if (route.page === 'item') {
     page = <ItemViewPage saleId={route.saleId} itemId={route.itemId} />

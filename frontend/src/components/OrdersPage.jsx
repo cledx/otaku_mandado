@@ -10,9 +10,14 @@ import PageBackground from './layout/PageBackground'
 import Navbar from './navbar/Navbar'
 import OrderGroupCard from './orders/OrderGroupCard'
 
+/** Shared sales/orders backdrop from public/assets/backgrounds/. */
 const ORDERS_BACKGROUND = '/assets/backgrounds/sales.png'
 
-/** Buckets the flat /v1/orders list into one card per order_number, preserving server ordering. */
+/**
+ * Buckets the flat `/v1/orders` list into one card per `order_number`.
+ * Preserves first-seen server ordering of groups (Map insertion order).
+ * Lines without an order_number get a stable synthetic key so they still render.
+ */
 function groupByOrderNumber(orders) {
   const groups = new Map()
   for (const order of orders) {
@@ -24,16 +29,28 @@ function groupByOrderNumber(orders) {
 }
 
 /**
- * View Orders (admin) / Your Orders (client) page.
- * Hits /v1/orders, which returns every user's orders for admins and the signed-in
- * user's orders for clients. Cards are grouped by order_number.
+ * Orders page — dual mode via hash route:
+ * - `#view-orders` → `mode="admin"` (View Orders): all clients' orders, status edits
+ * - `#your-orders` → `mode="mine"` (Your Orders): signed-in user's reservations
+ *
+ * Both modes hit the same `GET /v1/orders` endpoint; the backend scopes the
+ * result by role (admins see everyone, clients see themselves). Cards are
+ * grouped by `order_number` via `OrderGroupCard`.
+ *
+ * Permissions:
+ * - Status editing: admin + admin view only
+ * - Cancel / unreserve: clients on Your Orders, or admins on View Orders
+ *
  * @param {{ mode?: 'admin' | 'mine' }} props
  */
 export default function OrdersPage({ mode = 'mine' }) {
+  // 'loading' | 'guest' | 'client' | 'admin'
   const [authState, setAuthState] = useState('loading')
+  // null = still loading; [] = loaded empty; otherwise flat order-line list.
   const [orders, setOrders] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
+  // Establish role before fetching orders (guests never hit the API).
   useEffect(() => {
     if (!getAuthToken()) {
       setAuthState('guest')
@@ -55,6 +72,7 @@ export default function OrdersPage({ mode = 'mine' }) {
     }
   }, [])
 
+  // Load orders once we know the viewer is authenticated (admin or client).
   useEffect(() => {
     if (authState !== 'admin' && authState !== 'client') return undefined
 
@@ -79,6 +97,7 @@ export default function OrdersPage({ mode = 'mine' }) {
     }
   }, [authState])
 
+  // Admins always see buyer identity on cards; clients do not need it.
   const showUser = authState === 'admin'
   const isAdminView = mode === 'admin'
   const canEditStatus = authState === 'admin' && isAdminView
@@ -138,6 +157,7 @@ export default function OrdersPage({ mode = 'mine' }) {
           </p>
         </header>
 
+        {/* Access, load, empty, and grouped list states */}
         {authState === 'loading' ? (
           <p className="text-center text-sm text-brand-alabaster drop-shadow-md">
             Checking access…

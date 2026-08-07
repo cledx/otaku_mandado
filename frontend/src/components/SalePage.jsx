@@ -30,6 +30,10 @@ function timerHeading(phase) {
   return 'This drop has ended'
 }
 
+/**
+ * Formats an ISO / Date-parseable value for `<input type="datetime-local">`
+ * in the browser's local timezone (YYYY-MM-DDTHH:MM).
+ */
 function toLocalDateTimeInputValue(value) {
   if (!value) return ''
   const d = new Date(value)
@@ -42,6 +46,7 @@ function toLocalDateTimeInputValue(value) {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
+/** Parses a datetime-local string back into a Date, or null if invalid. */
 function parseLocalDateTimeInputValue(value) {
   if (!value) return null
   const d = new Date(value)
@@ -49,6 +54,7 @@ function parseLocalDateTimeInputValue(value) {
   return d
 }
 
+/** Short labels for the ±30m / ±1h / ±2h nudge buttons in the time editor. */
 function formatQuickShiftLabel(minutes) {
   const sign = minutes > 0 ? '+' : '-'
   const absMinutes = Math.abs(minutes)
@@ -58,25 +64,47 @@ function formatQuickShiftLabel(minutes) {
 }
 
 /**
- * Single-sale drop page (Figma "Drop Page").
- * @param {string} [saleId] — used when mode is "id" (#sale-{id} from landing)
- * @param {'id'|'current'|'upcoming'|'shop'} [mode] — shop loads sale named "Shop"; current/upcoming use nav_context
+ * Single-sale drop / shop page (Figma "Drop Page").
+ *
+ * Hash modes (see `parseAppRoute`):
+ * - `id` (`#sale-{id}`) — public sale by explicit id (e.g. from landing CTA)
+ * - `current` (`#current-sale`) — resolves `nav_context.current_sale_id` (auth required)
+ * - `upcoming` (`#upcoming-sale`) — resolves `nav_context.upcoming_sale_id` (auth required)
+ * - `shop` (`#browse-shop`) — permanent catalog named "Shop"; no countdown
+ *
+ * Public clients load items via sale_pages. Admins additionally merge yen-priced
+ * items from `GET /v1/sales/:id` so ProductCard can show / edit cost.
+ *
+ * Admin tools on this page:
+ * - Item Upload modal
+ * - Quick start ("Start in 10 minutes" / "Start now") on Upcoming only
+ * - Edit Timer modal (start/end + nudge chips); duration recomputed from end − start
+ *
+ * Sale data is polled every 60s; the countdown ticks every 1s.
+ *
+ * @param {string} [saleId] — used when mode is "id"
+ * @param {'id'|'current'|'upcoming'|'shop'} [mode]
  */
 export default function SalePage({ saleId, mode = 'id' }) {
   const isShop = mode === 'shop'
+  // For current/upcoming/shop: concrete sale id after async resolve.
   const [navResolvedId, setNavResolvedId] = useState(null)
   const [resolveError, setResolveError] = useState(null)
+  // sale_pages (or shop) payload, optionally enriched with admin items.
   const [payload, setPayload] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
+  // Quick-start button busy / error state (upcoming page only).
   const [reschedulingStart, setReschedulingStart] = useState(false)
   const [rescheduleError, setRescheduleError] = useState(null)
+  // Edit Timer modal state.
   const [timeEditorOpen, setTimeEditorOpen] = useState(false)
   const [savingTimes, setSavingTimes] = useState(false)
   const [timeEditorError, setTimeEditorError] = useState(null)
   const [draftStartInput, setDraftStartInput] = useState('')
   const [draftEndInput, setDraftEndInput] = useState('')
+  // Wall-clock tick for the DigitTimer.
   const [now, setNow] = useState(() => Date.now())
 
   const isUpcomingPage = mode === 'upcoming'
@@ -84,7 +112,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
   // Public #sale-{id} passes saleId; #browse-shop and nav sales resolve asynchronously.
   const resolvedId = mode === 'id' ? saleId : navResolvedId
 
-  // Show delete controls when the signed-in user is an admin.
+  // Show delete / upload / timer controls when the signed-in user is an admin.
   useEffect(() => {
     if (!getAuthToken()) {
       setIsAdmin(false)
@@ -106,6 +134,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }, [])
 
+  /** Removes a deleted item from local state without a full refetch. */
   const handleItemDeleted = (itemId) => {
     setPayload((prev) => {
       if (!prev?.sale?.items) return prev
@@ -119,6 +148,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
     })
   }
 
+  /** Appends newly uploaded items from ItemUploadModal into the grid. */
   const handleItemsCreated = (created) => {
     if (!Array.isArray(created) || created.length === 0) return
     setPayload((prev) => ({
@@ -130,6 +160,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }))
   }
 
+  /** Replaces one item after an inline admin edit (name, price, images, etc.). */
   const handleItemUpdated = (updated) => {
     setPayload((prev) => {
       if (!prev?.sale?.items) return prev
@@ -143,11 +174,16 @@ export default function SalePage({ saleId, mode = 'id' }) {
     })
   }
 
+  /**
+   * Reloads sale_pages and, for admins, merges yen-priced items from GET /sales/:id.
+   * Used after reschedule / edit-timer mutations.
+   */
   const reloadSalePage = async (saleIdForReload) => {
     const pageData = await fetchSalePage(saleIdForReload)
     return mergeAdminItems(pageData, saleIdForReload)
   }
 
+  /** PATCH start_time only (quick-start buttons on Upcoming). */
   const rescheduleStart = async (startTimeMs) => {
     if (!resolvedId) return
     setReschedulingStart(true)
@@ -166,6 +202,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
   const handleStartIn10Minutes = () => rescheduleStart(Date.now() + 10 * 60 * 1000)
   const handleStartNow = () => rescheduleStart(Date.now())
 
+  /** Seeds the Edit Timer drafts from the current payload and opens the modal. */
   const openTimeEditor = () => {
     setDraftStartInput(toLocalDateTimeInputValue(payload?.starts_at))
     setDraftEndInput(toLocalDateTimeInputValue(payload?.ends_at))
@@ -173,6 +210,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
     setTimeEditorOpen(true)
   }
 
+  /** Shifts a draft start/end by N minutes via the quick-nudge chips. */
   const nudgeDraftTime = (field, minutesDelta) => {
     const currentValue = field === 'start' ? draftStartInput : draftEndInput
     const parsed = parseLocalDateTimeInputValue(currentValue)
@@ -183,6 +221,10 @@ export default function SalePage({ saleId, mode = 'id' }) {
     else setDraftEndInput(nextValue)
   }
 
+  /**
+   * Saves Edit Timer changes: validates start < end, computes duration in hours,
+   * PATCHes start_time + duration, then refreshes payload.
+   */
   const handleSaveTimes = async () => {
     if (!resolvedId) return
     const startDate = parseLocalDateTimeInputValue(draftStartInput)
@@ -255,6 +297,10 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }, [mode])
 
+  /**
+   * For admins, replace public sale_pages items with the full GET /sales/:id list
+   * (includes yen price). Non-admins keep the public payload unchanged.
+   */
   const mergeAdminItems = async (pageData, saleIdForAdmin) => {
     if (!isAdmin || !getAuthToken()) return pageData
     const sale = await fetchSale(saleIdForAdmin)
@@ -267,7 +313,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }
 
-  // #browse-shop: persistent catalog (no countdown).
+  // #browse-shop: persistent catalog (no countdown). Poll every 60s.
   useEffect(() => {
     if (!isShop) return
 
@@ -300,7 +346,8 @@ export default function SalePage({ saleId, mode = 'id' }) {
     }
   }, [isShop, isAdmin])
 
-  // Public sale_pages for timing; admins merge in items with yen price from GET /v1/sales/:id.
+  // Timed drops: public sale_pages for timing; admins merge yen-priced items.
+  // Re-runs when resolvedId or isAdmin changes; polls every 60s.
   useEffect(() => {
     if (isShop || !resolvedId) return
 
@@ -356,7 +403,8 @@ export default function SalePage({ saleId, mode = 'id' }) {
 
       <PageBackground imageUrl={SALE_BACKGROUND} />
 
-      {/* Drop header: badge + countdown (Figma header strip); shop omits timing */}
+      {/* Drop header: badge + countdown (Figma header strip); shop omits timing
+          but still shows the strip when an admin needs upload controls. */}
       {(!isShop || (isAdmin && resolvedId)) ? (
         <header className="relative z-10 border-b border-brand-thistle/80 bg-brand-thistle/45 pt-10 backdrop-blur-sm">
           <div
@@ -386,6 +434,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
               </div>
             ) : null}
 
+            {/* Admin action cluster: quick-start (upcoming), upload, edit timer */}
             {isAdmin && resolvedId ? (
               <div className="flex flex-col items-end gap-2">
                 {rescheduleError ? (
@@ -446,6 +495,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
         onItemsCreated={handleItemsCreated}
       />
 
+      {/* Edit Timer modal: local datetime inputs + quick nudge chips */}
       {timeEditorOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-shadow/55 px-4 py-6">
           <div className="w-full max-w-xl rounded-2xl border border-brand-thistle/70 bg-white p-5 shadow-2xl sm:p-6">
@@ -535,6 +585,7 @@ export default function SalePage({ saleId, mode = 'id' }) {
         </div>
       ) : null}
 
+      {/* Product grid: shop gets extra top padding when the header strip is hidden */}
       <main
         className={
           isShop && !(isAdmin && resolvedId)
