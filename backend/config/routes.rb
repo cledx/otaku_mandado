@@ -26,6 +26,7 @@ Rails.application.routes.draw do
         member do
           delete :delete, action: :destroy
           post :duplicate
+          post :move_to_shop
         end
       end
     end

@@ -159,6 +159,13 @@ export function duplicateItem(saleId, itemId) {
   })
 }
 
+/** Moves an item from a drop sale onto the permanent Shop catalog. */
+export function moveItemToShop(saleId, itemId) {
+  return authFetch(`/v1/sales/${saleId}/items/${itemId}/move_to_shop`, {
+    method: 'POST',
+  })
+}
+
 /** Creates items from Cloudinary public_ids (runs AI metadata on the server). */
 export async function createItemsFromPublicIds(saleId, publicIds) {
   const token = getAuthToken()

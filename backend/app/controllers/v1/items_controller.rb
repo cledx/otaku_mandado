@@ -4,7 +4,7 @@ module V1
   # Nested under /v1/sales/:sale_id/items. create runs AI metadata extraction from Cloudinary ids.
   class ItemsController < BaseController
     before_action :set_sale
-    before_action :set_item, only: %i[show edit update destroy duplicate]
+    before_action :set_item, only: %i[show edit update destroy duplicate move_to_shop]
 
     def show
       render json: { data: @item.to_api_hash }
@@ -50,6 +50,18 @@ module V1
       render json: { data: copy.to_api_hash }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    end
+
+    # POST — reassign item from a drop sale onto the permanent Shop catalog.
+    def move_to_shop
+      @item.move_to_shop!
+      render json: { data: @item.to_api_hash }
+    rescue Item::AlreadyInShopError => e
+      render json: { errors: [e.message] }, status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotFound
+      render json: { errors: ["Shop catalog not found"] }, status: :unprocessable_entity
     end
 
     private

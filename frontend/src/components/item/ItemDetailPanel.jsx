@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react'
-import { deleteItem, duplicateItem, updateItem } from '../../api'
+import { deleteItem, duplicateItem, moveItemToShop, updateItem } from '../../api'
 import { itemRouteHash, setAppHash } from '../../utils/hashRoute'
 import {
   cloudinaryPreviewUrl,
@@ -84,6 +84,9 @@ export default function ItemDetailPanel({
   const [deleteError, setDeleteError] = useState(null)
   const [duplicating, setDuplicating] = useState(false)
   const [duplicateError, setDuplicateError] = useState(null)
+  const [confirmMoveOpen, setConfirmMoveOpen] = useState(false)
+  const [movingToShop, setMovingToShop] = useState(false)
+  const [moveError, setMoveError] = useState(null)
   const [widgetReady, setWidgetReady] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState(null)
   const [uploadError, setUploadError] = useState(null)
@@ -226,6 +229,20 @@ export default function ItemDetailPanel({
     }
   }
 
+  const handleConfirmMoveToShop = async () => {
+    setMoveError(null)
+    setMovingToShop(true)
+    try {
+      const moved = await moveItemToShop(saleId, item.id)
+      setConfirmMoveOpen(false)
+      setAppHash(itemRouteHash(moved.sale_id, moved.id))
+    } catch (err) {
+      setMoveError(err.message)
+    } finally {
+      setMovingToShop(false)
+    }
+  }
+
   if (!isAdmin) {
     return (
       <>
@@ -271,7 +288,8 @@ export default function ItemDetailPanel({
   }
 
   const uploadBusy = uploadingSlot !== null
-  const replaceDisabled = !cloudinaryConfigured || !widgetReady || uploadBusy || saving
+  const actionBusy = saving || uploadBusy || duplicating || movingToShop
+  const replaceDisabled = !cloudinaryConfigured || !widgetReady || actionBusy
 
   return (
     <>
@@ -434,7 +452,7 @@ export default function ItemDetailPanel({
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <button
             type="submit"
-            disabled={saving || uploadBusy || duplicating}
+            disabled={actionBusy}
             className="rounded-full border border-white bg-white px-6 py-2.5 text-sm font-semibold text-brand-dusty shadow-sm transition hover:bg-brand-lavender disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save changes'}
@@ -442,18 +460,31 @@ export default function ItemDetailPanel({
           <button
             type="button"
             onClick={() => void handleDuplicate()}
-            disabled={saving || uploadBusy || duplicating}
+            disabled={actionBusy}
             className="rounded-full border border-white/80 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
           >
             {duplicating ? 'Duplicating…' : 'Duplicate'}
           </button>
+          {!saleShop ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMoveError(null)
+                setConfirmMoveOpen(true)
+              }}
+              disabled={actionBusy}
+              className="rounded-full border border-white/80 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
+            >
+              Move to shop
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => {
               setDeleteError(null)
               setConfirmDeleteOpen(true)
             }}
-            disabled={duplicating}
+            disabled={actionBusy}
             className="rounded-full border border-brand-lavender/80 bg-transparent px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-60"
           >
             Delete item
@@ -478,6 +509,25 @@ export default function ItemDetailPanel({
           }
         }}
         onConfirm={() => void handleConfirmDelete()}
+      />
+
+      <ConfirmDialog
+        open={confirmMoveOpen}
+        title="Move to shop?"
+        message={
+          moveError
+            ? `${moveError} Try again, or cancel to close.`
+            : `Move “${item.name || 'this item'}” from this drop into the permanent shop?`
+        }
+        confirmLabel="Move to shop"
+        confirming={movingToShop}
+        onClose={() => {
+          if (!movingToShop) {
+            setConfirmMoveOpen(false)
+            setMoveError(null)
+          }
+        }}
+        onConfirm={() => void handleConfirmMoveToShop()}
       />
     </>
   )

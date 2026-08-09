@@ -89,6 +89,16 @@ class Item < ApplicationRecord
     copy
   end
 
+  # Reassigns this item from a timed drop onto the permanent Shop catalog.
+  def move_to_shop!
+    raise AlreadyInShopError, "Item is already in the shop" if sale.shop?
+
+    update!(sale: Sale.shop)
+    self
+  end
+
+  class AlreadyInShopError < StandardError; end
+
   private
 
   def sync_mx_price_from_price?

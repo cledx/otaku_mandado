@@ -73,4 +73,20 @@ class ItemTest < ActiveSupport::TestCase
     assert_equal "available", copy.status
     assert_equal "purchased", item.reload.status
   end
+
+  test "move_to_shop! reassigns item onto the Shop sale" do
+    shop = Sale.create!(name: Sale::SHOP_NAME)
+    item = @sale.items.create!(name: "Figure", status: "available", image: [])
+
+    item.move_to_shop!
+
+    assert_equal shop.id, item.reload.sale_id
+  end
+
+  test "move_to_shop! raises when item is already in the shop" do
+    shop = Sale.create!(name: Sale::SHOP_NAME)
+    item = shop.items.create!(name: "Figure", status: "available", image: [])
+
+    assert_raises(Item::AlreadyInShopError) { item.move_to_shop! }
+  end
 end
