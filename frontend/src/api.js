@@ -152,6 +152,13 @@ export function updateItem(saleId, itemId, item) {
   })
 }
 
+/** Clones an item under the same sale; copy is always status "available". */
+export function duplicateItem(saleId, itemId) {
+  return authFetch(`/v1/sales/${saleId}/items/${itemId}/duplicate`, {
+    method: 'POST',
+  })
+}
+
 /** Creates items from Cloudinary public_ids (runs AI metadata on the server). */
 export async function createItemsFromPublicIds(saleId, publicIds) {
   const token = getAuthToken()

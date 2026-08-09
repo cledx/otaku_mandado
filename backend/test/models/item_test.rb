@@ -46,4 +46,31 @@ class ItemTest < ActiveSupport::TestCase
       assert_includes item.errors[:price], "could not convert to Mexican pesos: offline"
     end
   end
+
+  test "duplicate_as_available! copies listing fields and forces available status" do
+    item = nil
+    with_stubbed_jpy_to_mxn(->(_amount, **) { 150 }) do
+      item = @sale.items.create!(
+        name: "Figure",
+        brand: "Good Smile",
+        description: "Nendoroid",
+        price: 1000,
+        status: "purchased",
+        image: ["sale/front", "sale/back"]
+      )
+    end
+
+    copy = item.duplicate_as_available!
+
+    assert_not_equal item.id, copy.id
+    assert_equal item.sale_id, copy.sale_id
+    assert_equal "Figure", copy.name
+    assert_equal "Good Smile", copy.brand
+    assert_equal "Nendoroid", copy.description
+    assert_equal 1000, copy.price
+    assert_equal 150, copy.mx_price
+    assert_equal ["sale/front", "sale/back"], copy.image
+    assert_equal "available", copy.status
+    assert_equal "purchased", item.reload.status
+  end
 end

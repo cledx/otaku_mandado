@@ -71,9 +71,29 @@ class Item < ApplicationRecord
     h
   end
 
+  # Exact listing copy under the same sale, always starting as available.
+  # Preserves yen/MX prices as-is (skips rate conversion on create).
+  def duplicate_as_available!
+    copy = self.class.new(
+      sale_id: sale_id,
+      name: name,
+      brand: brand,
+      description: description,
+      price: price,
+      mx_price: mx_price,
+      image: Array(image).deep_dup,
+      status: "available"
+    )
+    copy.instance_variable_set(:@skip_mx_price_sync, true)
+    copy.save!
+    copy
+  end
+
   private
 
   def sync_mx_price_from_price?
+    return false if @skip_mx_price_sync
+
     will_save_change_to_price?
   end
 

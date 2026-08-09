@@ -4,7 +4,7 @@ module V1
   # Nested under /v1/sales/:sale_id/items. create runs AI metadata extraction from Cloudinary ids.
   class ItemsController < BaseController
     before_action :set_sale
-    before_action :set_item, only: %i[show edit update destroy]
+    before_action :set_item, only: %i[show edit update destroy duplicate]
 
     def show
       render json: { data: @item.to_api_hash }
@@ -42,6 +42,14 @@ module V1
     def destroy
       @item.soft_discard!
       render json: { data: @item.reload.to_api_hash }
+    end
+
+    # POST — clone listing fields; new item is always status "available".
+    def duplicate
+      copy = @item.duplicate_as_available!
+      render json: { data: copy.to_api_hash }, status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
     end
 
     private

@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       resources :items, only: %i[show create edit update destroy] do
         member do
           delete :delete, action: :destroy
+          post :duplicate
         end
       end
     end
