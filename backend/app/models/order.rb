@@ -15,6 +15,7 @@ class Order < ApplicationRecord
 
   belongs_to :user
   belongs_to :item
+  belongs_to :coupon_code, optional: true
 
   before_validation :assign_order_number, on: :create
   after_create :finalize_order_number

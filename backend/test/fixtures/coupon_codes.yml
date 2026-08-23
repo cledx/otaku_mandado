@@ -1,0 +1,9 @@
+one:
+  code: SAVE10
+  discount: 10
+  expiry: 2026-12-31 23:59:59
+
+two:
+  code: SAVE20
+  discount: 20
+  expiry: 2026-12-31 23:59:59

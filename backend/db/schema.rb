@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_053431) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "coupon_codes", force: :cascade do |t|
+    t.string "code"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.integer "discount"
+    t.datetime "expiry"
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_coupon_codes_on_code", unique: true
+    t.index ["deleted_at"], name: "index_coupon_codes_on_deleted_at"
+  end
 
   create_table "items", force: :cascade do |t|
     t.string "brand"
@@ -32,6 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_090000) do
   end
 
   create_table "orders", force: :cascade do |t|
+    t.bigint "coupon_code_id"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.bigint "item_id", null: false
@@ -39,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_090000) do
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["coupon_code_id"], name: "index_orders_on_coupon_code_id"
     t.index ["deleted_at"], name: "index_orders_on_deleted_at"
     t.index ["item_id"], name: "index_orders_on_item_id"
     t.index ["order_number"], name: "index_orders_on_order_number"
@@ -72,6 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_090000) do
   end
 
   add_foreign_key "items", "sales"
+  add_foreign_key "orders", "coupon_codes"
   add_foreign_key "orders", "items"
   add_foreign_key "orders", "users"
 end
