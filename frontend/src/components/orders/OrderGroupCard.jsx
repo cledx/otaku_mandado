@@ -69,13 +69,16 @@ function formatDate(iso) {
  * Cancelling an order frees the item — it does NOT delete the item.
  *
  * Client-only (`showCouponField`): a coupon input sits beside the order number.
- * Once a code is applied it is shown greyed out and locked.
+ * Once a code is applied it is shown greyed out and locked (admins see the same
+ * locked chip when a coupon is already on the order).
+ *
+ * Header always shows the MXN total of every line. With a coupon, the original
+ * total is struck through and the discounted total sits next to it.
  *
  * @param {{
  *   orderNumber: string,
  *   lines: object[],
  *   showUser?: boolean,
- *   showOrderTotal?: boolean,
  *   showCouponField?: boolean,
  *   editable?: boolean,
  *   onLineStatusChange?: (orderId: number, nextStatus: string) => Promise<void> | void,
@@ -88,7 +91,6 @@ export default function OrderGroupCard({
   orderNumber,
   lines,
   showUser = false,
-  showOrderTotal = false,
   showCouponField = false,
   editable = false,
   onLineStatusChange,
@@ -123,15 +125,17 @@ export default function OrderGroupCard({
 
   const userEmail = showUser ? lines.find((l) => l.user?.email)?.user?.email : null
 
-  const orderTotalMx = showOrderTotal
-    ? lines.reduce((sum, line) => {
-        const price = line.item?.mx_price
-        const numeric = typeof price === 'number' ? price : Number(price)
-        return sum + (Number.isFinite(numeric) ? numeric : 0)
-      }, 0)
-    : null
-  const orderTotalLabel =
-    showOrderTotal && orderTotalMx != null ? formatPriceMx(orderTotalMx) : null
+  const orderTotalMx = lines.reduce((sum, line) => {
+    const price = line.item?.mx_price
+    const numeric = typeof price === 'number' ? price : Number(price)
+    return sum + (Number.isFinite(numeric) ? numeric : 0)
+  }, 0)
+  const discountPct = Number(existingCoupon?.discount)
+  const hasDiscount = Number.isFinite(discountPct) && discountPct > 0
+  const discountedTotalMx = hasDiscount ? orderTotalMx * (1 - discountPct / 100) : null
+  const orderTotalLabel = formatPriceMx(orderTotalMx)
+  const discountedTotalLabel =
+    discountedTotalMx != null ? formatPriceMx(discountedTotalMx) : null
 
   const openItem = (line) => {
     const saleId = line.item?.sale_id
@@ -216,7 +220,7 @@ export default function OrderGroupCard({
               ) : null}
             </div>
 
-            {showCouponField ? (
+            {existingCoupon || showCouponField ? (
               <div className="mt-2">
                 {existingCoupon ? (
                   <label className="flex flex-wrap items-center gap-2">
@@ -277,8 +281,23 @@ export default function OrderGroupCard({
                 {lines.length} {lines.length === 1 ? 'item' : 'items'}
               </span>
               {orderTotalLabel ? (
-                <span className="font-semibold text-brand-shadow/85">
-                  Total {orderTotalLabel}
+                <span
+                  className="font-semibold text-brand-shadow/85"
+                  aria-label={
+                    hasDiscount && discountedTotalLabel
+                      ? `Total ${discountedTotalLabel}, originally ${orderTotalLabel}`
+                      : `Total ${orderTotalLabel}`
+                  }
+                >
+                  Total{' '}
+                  {hasDiscount && discountedTotalLabel ? (
+                    <>
+                      <s className="font-medium text-brand-shadow/45">{orderTotalLabel}</s>
+                      <span className="ml-1.5">{discountedTotalLabel}</span>
+                    </>
+                  ) : (
+                    orderTotalLabel
+                  )}
                 </span>
               ) : null}
             </div>
