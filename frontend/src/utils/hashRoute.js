@@ -22,6 +22,8 @@ export function parseAppRoute() {
   if (hash === 'your-orders') return { page: 'orders', mode: 'mine' }
   if (hash === 'view-accounts') return { page: 'accounts' }
   if (hash === 'admin-tools') return { page: 'admin-tools' }
+  if (hash === 'user-settings') return { page: 'user-settings' }
+  if (hash === 'change-password') return { page: 'change-password' }
   if (hash === 'coupon-codes') return { page: 'coupon-codes' }
   if (Object.hasOwn(ADMIN_TOOL_ROUTES, hash)) {
     return { page: 'admin-tool-stub', title: ADMIN_TOOL_ROUTES[hash] }

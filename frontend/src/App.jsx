@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import AccountsPage from './components/AccountsPage'
 import AdminToolsPage from './components/AdminToolsPage'
 import AdminToolStubPage from './components/AdminToolStubPage'
+import ChangePasswordPage from './components/ChangePasswordPage'
 import CouponCodesPage from './components/CouponCodesPage'
 import ItemViewPage from './components/ItemViewPage'
 import LandingPage from './components/LandingPage'
 import OrdersPage from './components/OrdersPage'
 import ScheduleSalePage from './components/ScheduleSalePage'
 import SalePage from './components/SalePage'
+import UserSettingsPage from './components/UserSettingsPage'
 import Footer from './components/layout/Footer'
 import { parseAppRoute } from './utils/hashRoute'
 
@@ -23,6 +25,8 @@ import { parseAppRoute } from './utils/hashRoute'
  * - `#view-orders` / `#your-orders` → OrdersPage (admin | mine)
  * - `#view-accounts` → AccountsPage
  * - `#admin-tools` → AdminToolsPage
+ * - `#user-settings` → UserSettingsPage
+ * - `#change-password` → ChangePasswordPage
  * - `#coupon-codes` → CouponCodesPage
  * - `#scheduled-sales` / `#past-sales` / `#deleted-sales` / `#deleted-items` /
  *   `#past-orders` → AdminToolStubPage
@@ -59,6 +63,10 @@ function App() {
     page = <AccountsPage />
   } else if (route.page === 'admin-tools') {
     page = <AdminToolsPage />
+  } else if (route.page === 'user-settings') {
+    page = <UserSettingsPage />
+  } else if (route.page === 'change-password') {
+    page = <ChangePasswordPage />
   } else if (route.page === 'coupon-codes') {
     page = <CouponCodesPage />
   } else if (route.page === 'admin-tool-stub') {

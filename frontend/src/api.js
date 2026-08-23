@@ -285,6 +285,36 @@ export function register(email, password, passwordConfirmation) {
   )
 }
 
+/**
+ * Changes the signed-in user's password. Requires the current password plus a
+ * matching new password / confirmation pair (Devise `update_with_password`).
+ */
+export async function changePassword(currentPassword, password, passwordConfirmation) {
+  const token = getAuthToken()
+  if (!token) throw new Error('Not signed in')
+
+  const res = await fetch(`${API_BASE}/users`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user: {
+        current_password: currentPassword,
+        password,
+        password_confirmation: passwordConfirmation,
+      },
+    }),
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(parseAuthError(body, 'Could not change password'))
+  }
+  return body.data ?? body
+}
+
 export async function logout() {
   const token = getAuthToken()
   if (token) {

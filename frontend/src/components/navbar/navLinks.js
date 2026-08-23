@@ -21,12 +21,13 @@ export function buildNavbarLinks(role, visibility = {}) {
       { to: '#view-orders', text: 'View Orders' },
       { to: '#view-accounts', text: 'View Accounts' },
       { to: '#admin-tools', text: 'Admin Tools' },
+      { to: '#user-settings', text: 'User Settings' },
     )
   } else {
     links.push(
       { to: '#your-orders', text: 'Your Orders' },
       { to: '#browse-shop', text: 'Browse Shop' },
-      { to: '#account-settings', text: 'Account Settings' },
+      { to: '#user-settings', text: 'User Settings' },
     )
   }
 
