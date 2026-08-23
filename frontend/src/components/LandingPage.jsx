@@ -158,9 +158,10 @@ export default function LandingPage() {
     <div className="relative min-h-svh w-full bg-brand-shadow text-brand-shadow">
       <Navbar />
 
-      <PageBackground />
+      <div className="grid w-full">
+        <PageBackground attach="scroll" className="col-start-1 row-start-1" />
 
-      <main className="relative z-10 flex min-h-svh w-full flex-col">
+        <main className="relative z-10 col-start-1 row-start-1 flex min-h-svh w-full flex-col self-start">
         {/* Hero: countdown + optional "Current Drop" CTA */}
         <div className="relative flex min-h-[70vh] flex-1 flex-col items-center justify-center px-4 pb-48 pt-10 sm:min-h-[75vh] sm:px-6 sm:pb-56 sm:pt-16">
           <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
@@ -234,6 +235,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+      </div>
     </div>
   )
 }

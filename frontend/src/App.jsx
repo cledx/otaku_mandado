@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import AccountsPage from './components/AccountsPage'
+import AdminToolsPage from './components/AdminToolsPage'
+import AdminToolStubPage from './components/AdminToolStubPage'
 import ItemViewPage from './components/ItemViewPage'
 import LandingPage from './components/LandingPage'
 import OrdersPage from './components/OrdersPage'
@@ -19,6 +21,9 @@ import { parseAppRoute } from './utils/hashRoute'
  * - `#schedule-sale` → ScheduleSalePage
  * - `#view-orders` / `#your-orders` → OrdersPage (admin | mine)
  * - `#view-accounts` → AccountsPage
+ * - `#admin-tools` → AdminToolsPage
+ * - `#scheduled-sales` / `#past-sales` / `#deleted-sales` / `#deleted-items` /
+ *   `#create-coupon-code` / `#past-orders` → AdminToolStubPage
  * - `#item-{saleId}-{itemId}` → ItemViewPage
  *
  * Footer is rendered on every page; each page mounts its own Navbar.
@@ -50,6 +55,10 @@ function App() {
     page = <OrdersPage mode={route.mode} />
   } else if (route.page === 'accounts') {
     page = <AccountsPage />
+  } else if (route.page === 'admin-tools') {
+    page = <AdminToolsPage />
+  } else if (route.page === 'admin-tool-stub') {
+    page = <AdminToolStubPage title={route.title} />
   } else {
     page = <LandingPage />
   }

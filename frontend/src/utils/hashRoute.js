@@ -1,4 +1,14 @@
-/** @returns {{ page: string, mode?: string, saleId?: string, itemId?: string }} */
+/** Admin tool hashes → display titles (stubs until each tool is built). */
+export const ADMIN_TOOL_ROUTES = {
+  'scheduled-sales': 'Scheduled Sales',
+  'past-sales': 'Past Sales',
+  'deleted-sales': 'Deleted Sales',
+  'deleted-items': 'Deleted Items',
+  'create-coupon-code': 'Create Coupon code',
+  'past-orders': 'Past Orders',
+}
+
+/** @returns {{ page: string, mode?: string, saleId?: string, itemId?: string, title?: string }} */
 export function parseAppRoute() {
   const hash = window.location.hash.replace(/^#/, '')
   const itemMatch = hash.match(/^item-(\d+)-(\d+)$/)
@@ -12,6 +22,10 @@ export function parseAppRoute() {
   if (hash === 'view-orders') return { page: 'orders', mode: 'admin' }
   if (hash === 'your-orders') return { page: 'orders', mode: 'mine' }
   if (hash === 'view-accounts') return { page: 'accounts' }
+  if (hash === 'admin-tools') return { page: 'admin-tools' }
+  if (Object.hasOwn(ADMIN_TOOL_ROUTES, hash)) {
+    return { page: 'admin-tool-stub', title: ADMIN_TOOL_ROUTES[hash] }
+  }
   const saleMatch = hash.match(/^sale-(\d+)$/)
   if (saleMatch) return { page: 'sale', mode: 'id', saleId: saleMatch[1] }
   return { page: 'landing' }

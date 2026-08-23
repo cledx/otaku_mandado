@@ -1,12 +1,37 @@
 /**
- * Full-viewport background image with a dark gradient overlay.
+ * Page background image.
+ *
  * @param {string} [imageUrl] — path under public/, e.g. landing_page.png or sales.png
+ * @param {'fixed' | 'scroll'} [attach='fixed']
+ *   - `fixed` — stretches to the viewport and ignores scroll
+ *   - `scroll` — full width at the image’s native ratio; scrolls with the page
  */
 export default function PageBackground({
   imageUrl = '/assets/backgrounds/landing_page.png',
   className = '',
   overlay = true,
+  attach = 'fixed',
 }) {
+  if (attach === 'scroll') {
+    return (
+      <div
+        aria-hidden
+        className={`pointer-events-none relative z-0 w-full ${className}`.trim()}
+      >
+        <img src={imageUrl} alt="" draggable={false} className="block h-auto w-full" />
+        {overlay ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'linear-gradient(to bottom, rgba(45,45,52,0.32), rgba(45,45,52,0.58))',
+            }}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   const backgroundImage = overlay
     ? `linear-gradient(to bottom, rgba(45,45,52,0.32), rgba(45,45,52,0.58)), url('${imageUrl}')`
     : `url('${imageUrl}')`

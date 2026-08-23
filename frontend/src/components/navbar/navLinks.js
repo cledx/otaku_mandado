@@ -20,6 +20,7 @@ export function buildNavbarLinks(role, visibility = {}) {
       { to: '#browse-shop', text: 'Browse Shop' },
       { to: '#view-orders', text: 'View Orders' },
       { to: '#view-accounts', text: 'View Accounts' },
+      { to: '#admin-tools', text: 'Admin Tools' },
     )
   } else {
     links.push(
