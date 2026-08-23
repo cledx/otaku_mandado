@@ -4,7 +4,6 @@ export const ADMIN_TOOL_ROUTES = {
   'past-sales': 'Past Sales',
   'deleted-sales': 'Deleted Sales',
   'deleted-items': 'Deleted Items',
-  'create-coupon-code': 'Create Coupon code',
   'past-orders': 'Past Orders',
 }
 
@@ -23,6 +22,7 @@ export function parseAppRoute() {
   if (hash === 'your-orders') return { page: 'orders', mode: 'mine' }
   if (hash === 'view-accounts') return { page: 'accounts' }
   if (hash === 'admin-tools') return { page: 'admin-tools' }
+  if (hash === 'coupon-codes') return { page: 'coupon-codes' }
   if (Object.hasOwn(ADMIN_TOOL_ROUTES, hash)) {
     return { page: 'admin-tool-stub', title: ADMIN_TOOL_ROUTES[hash] }
   }

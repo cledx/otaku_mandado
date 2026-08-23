@@ -27,9 +27,9 @@ const ADMIN_TOOLS = [
     description: 'Show all items that were deleted',
   },
   {
-    to: '#create-coupon-code',
-    text: 'Create Coupon code',
-    description: 'Create a new coupon code',
+    to: '#coupon-codes',
+    text: 'Coupon Codes',
+    description: 'Create and manage coupon codes',
   },
   {
     to: '#past-orders',

@@ -36,7 +36,8 @@ class Order < ApplicationRecord
       order_number: order_number,
       deleted_at: deleted_at,
       created_at: created_at,
-      updated_at: updated_at
+      updated_at: updated_at,
+      coupon_code: coupon_code&.kept? ? coupon_code.to_api_hash : nil
     }
     h[:item] = item&.to_api_hash if include_item
     h[:user] = { id: user.id, email: user.email } if include_user && user

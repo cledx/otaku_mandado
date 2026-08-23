@@ -31,9 +31,16 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :orders, only: %i[index show new create edit update destroy] # current_user scoped
+    resources :orders, only: %i[index show new create edit update destroy] do
+      # Client applies a promotional code to every line sharing an order_number.
+      collection do
+        post :apply_coupon
+      end
+    end
 
     resources :accounts, only: %i[index] # admin only (see AccountsController)
+
+    resources :coupon_codes, only: %i[index create update destroy] # admin only (see CouponCodesController)
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

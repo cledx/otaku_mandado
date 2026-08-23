@@ -97,6 +97,17 @@ export function deleteOrder(orderId) {
 }
 
 /**
+ * Client applies a coupon to every line sharing an order_number.
+ * Returns the updated order lines for that group.
+ */
+export function applyOrderCoupon(orderNumber, code) {
+  return authFetch('/v1/orders/apply_coupon', {
+    method: 'POST',
+    body: { order_number: orderNumber, code },
+  })
+}
+
+/**
  * Lists every registered account (admin only). Each entry includes `pending_orders`
  * (boolean), `pending_orders_count`, and `total_spent` (MXN, credited as orders
  * flip to "payment fulfilled") so the View Accounts page can flag users with
@@ -104,6 +115,32 @@ export function deleteOrder(orderId) {
  */
 export function fetchAccounts() {
   return authFetch('/v1/accounts')
+}
+
+/** Lists kept coupon codes (admin). */
+export function fetchCouponCodes() {
+  return authFetch('/v1/coupon_codes')
+}
+
+/** Creates a coupon code (admin). `discount` is percent 1–100; `expiry` is ISO. */
+export function createCouponCode(couponCode) {
+  return authFetch('/v1/coupon_codes', {
+    method: 'POST',
+    body: { coupon_code: couponCode },
+  })
+}
+
+/** Updates a coupon code (admin). */
+export function updateCouponCode(id, couponCode) {
+  return authFetch(`/v1/coupon_codes/${id}`, {
+    method: 'PATCH',
+    body: { coupon_code: couponCode },
+  })
+}
+
+/** Soft-deletes a coupon code (admin). */
+export function deleteCouponCode(id) {
+  return authFetch(`/v1/coupon_codes/${id}`, { method: 'DELETE' })
 }
 
 /** Persistent shop catalog (sale named "Shop"; GET /v1/shop_sale). */

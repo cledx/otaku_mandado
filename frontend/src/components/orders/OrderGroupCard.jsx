@@ -68,15 +68,20 @@ function formatDate(iso) {
  * just that line, the header "Cancel order" button cancels the whole group.
  * Cancelling an order frees the item — it does NOT delete the item.
  *
+ * Client-only (`showCouponField`): a coupon input sits beside the order number.
+ * Once a code is applied it is shown greyed out and locked.
+ *
  * @param {{
  *   orderNumber: string,
  *   lines: object[],
  *   showUser?: boolean,
  *   showOrderTotal?: boolean,
+ *   showCouponField?: boolean,
  *   editable?: boolean,
  *   onLineStatusChange?: (orderId: number, nextStatus: string) => Promise<void> | void,
  *   onLineDelete?: (orderId: number) => Promise<void> | void,
  *   onGroupDelete?: (orderNumber: string) => Promise<void> | void,
+ *   onApplyCoupon?: (orderNumber: string, code: string) => Promise<void> | void,
  * }} props
  */
 export default function OrderGroupCard({
@@ -84,10 +89,12 @@ export default function OrderGroupCard({
   lines,
   showUser = false,
   showOrderTotal = false,
+  showCouponField = false,
   editable = false,
   onLineStatusChange,
   onLineDelete,
   onGroupDelete,
+  onApplyCoupon,
 }) {
   const [groupConfirmOpen, setGroupConfirmOpen] = useState(false)
   const [groupDeleting, setGroupDeleting] = useState(false)
@@ -96,6 +103,11 @@ export default function OrderGroupCard({
   const [lineConfirm, setLineConfirm] = useState(null) // { id, name } | null
   const [lineDeleting, setLineDeleting] = useState(false)
   const [lineError, setLineError] = useState(null)
+
+  const existingCoupon = lines.find((l) => l.coupon_code?.code)?.coupon_code ?? null
+  const [couponDraft, setCouponDraft] = useState('')
+  const [couponSubmitting, setCouponSubmitting] = useState(false)
+  const [couponError, setCouponError] = useState(null)
 
   const earliest = lines.reduce((acc, line) => {
     if (!line.created_at) return acc
@@ -162,6 +174,26 @@ export default function OrderGroupCard({
     }
   }
 
+  const submitCoupon = async (event) => {
+    event.preventDefault()
+    if (!onApplyCoupon || existingCoupon) return
+    const trimmed = couponDraft.trim()
+    if (!trimmed) {
+      setCouponError('Enter a coupon code.')
+      return
+    }
+    setCouponError(null)
+    setCouponSubmitting(true)
+    try {
+      await onApplyCoupon(orderNumber, trimmed)
+      setCouponDraft('')
+    } catch (e) {
+      setCouponError(e?.message || 'Could not apply coupon code.')
+    } finally {
+      setCouponSubmitting(false)
+    }
+  }
+
   return (
     <>
       <article className="rounded-2xl border border-brand-thistle/45 bg-brand-lavender/97 p-5 shadow-md ring-1 ring-brand-thistle/30 sm:p-6">
@@ -183,6 +215,62 @@ export default function OrderGroupCard({
                 </span>
               ) : null}
             </div>
+
+            {showCouponField ? (
+              <div className="mt-2">
+                {existingCoupon ? (
+                  <label className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-brand-shadow/60">Coupon</span>
+                    <input
+                      type="text"
+                      value={existingCoupon.code}
+                      disabled
+                      readOnly
+                      aria-label={`Coupon code ${existingCoupon.code} applied`}
+                      className="w-36 rounded-lg border border-brand-thistle/50 bg-brand-thistle/25 px-3 py-1.5 font-mono text-sm text-brand-shadow/50"
+                    />
+                    {existingCoupon.discount != null ? (
+                      <span className="text-xs text-brand-shadow/55">
+                        {existingCoupon.discount}% off
+                      </span>
+                    ) : null}
+                  </label>
+                ) : (
+                  <form
+                    onSubmit={submitCoupon}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <label className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-brand-shadow/70">Coupon</span>
+                      <input
+                        type="text"
+                        name="coupon_code"
+                        value={couponDraft}
+                        onChange={(e) => setCouponDraft(e.target.value)}
+                        disabled={couponSubmitting}
+                        placeholder="Enter code"
+                        autoComplete="off"
+                        aria-label={`Coupon code for order ${orderNumber}`}
+                        className="w-36 rounded-lg border border-brand-thistle/80 bg-brand-alabaster/90 px-3 py-1.5 font-mono text-sm text-brand-shadow outline-none transition placeholder:text-brand-shadow/40 focus:border-brand-dusty focus:ring-2 focus:ring-brand-dusty/25 disabled:opacity-60"
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={couponSubmitting || !couponDraft.trim()}
+                      className="rounded-full border border-brand-shadow bg-brand-shadow px-3 py-1.5 text-xs font-semibold text-brand-lavender transition hover:border-brand-dusty hover:bg-brand-dusty disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {couponSubmitting ? 'Applying…' : 'Apply'}
+                    </button>
+                  </form>
+                )}
+                {couponError ? (
+                  <p className="mt-1 text-xs text-brand-dusty" role="alert">
+                    {couponError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand-shadow/65">
               {createdLabel ? <span>Placed {createdLabel}</span> : null}
               <span>

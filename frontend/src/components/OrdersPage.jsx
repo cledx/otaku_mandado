@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  applyOrderCoupon,
   deleteOrder,
   fetchNavContext,
   fetchOrders,
@@ -137,6 +138,21 @@ export default function OrdersPage({ mode = 'mine' }) {
     [orders],
   )
 
+  // Client applies a coupon to every line in the order group; merge updated rows.
+  const handleApplyCoupon = useCallback(async (orderNumber, code) => {
+    const updatedLines = await applyOrderCoupon(orderNumber, code)
+    const byId = new Map(
+      (Array.isArray(updatedLines) ? updatedLines : []).map((line) => [line.id, line]),
+    )
+    setOrders((prev) => {
+      if (!prev) return prev
+      return prev.map((o) => {
+        const next = byId.get(o.id)
+        return next ? { ...o, ...next, user: next.user ?? o.user } : o
+      })
+    })
+  }, [])
+
   const heading = isAdminView ? 'View Orders' : 'Your Orders'
   const subhead = isAdminView
     ? 'Every client order, grouped by order number, with the current fulfillment status per item.'
@@ -191,10 +207,14 @@ export default function OrdersPage({ mode = 'mine' }) {
                   lines={lines}
                   showUser={showUser}
                   showOrderTotal={isAdminView}
+                  showCouponField={!isAdminView && authState === 'client'}
                   editable={canEditStatus}
                   onLineStatusChange={canEditStatus ? handleLineStatusChange : undefined}
                   onLineDelete={canCancel ? handleLineDelete : undefined}
                   onGroupDelete={canCancel ? handleGroupDelete : undefined}
+                  onApplyCoupon={
+                    !isAdminView && authState === 'client' ? handleApplyCoupon : undefined
+                  }
                 />
               </li>
             ))}
