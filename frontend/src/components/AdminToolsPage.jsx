@@ -1,5 +1,6 @@
 import PageBackground from './layout/PageBackground'
 import Navbar from './navbar/Navbar'
+import AdminToolTitle from './AdminToolTitle'
 
 const BACKGROUND = '/assets/backgrounds/sales.png'
 
@@ -49,9 +50,7 @@ export default function AdminToolsPage() {
 
       <main className="relative z-10 mx-auto w-full max-w-lg px-4 pb-12 pt-24 sm:px-6 sm:pt-28">
         <header className="mb-8 flex justify-center">
-          <h1 className="inline-flex rounded-full border border-brand-thistle/50 bg-brand-shadow/80 px-8 py-3 font-sans text-2xl font-bold text-brand-lavender shadow-lg backdrop-blur-sm sm:px-10 sm:text-3xl">
-            Admin Tools
-          </h1>
+          <AdminToolTitle>Admin Tools</AdminToolTitle>
         </header>
 
         <nav aria-label="Admin tools" className="flex flex-col gap-3">
