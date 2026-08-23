@@ -32,7 +32,7 @@ TEXT
 end
 
 [
-  ["admin@example.com", "admin"],
+  ["MasterAdmin@admin.com", "admin"],
   ["client1@example.com", "client"],
   ["client2@example.com", "client"],
   ["client3@example.com", "client"]
