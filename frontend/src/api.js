@@ -117,6 +117,17 @@ export function fetchAccounts() {
   return authFetch('/v1/accounts')
 }
 
+/**
+ * Admin creates an account. Password is always the server default ("password").
+ * `role` is `"client"` (User) or `"admin"`.
+ */
+export function createAccount({ email, role }) {
+  return authFetch('/v1/accounts', {
+    method: 'POST',
+    body: { account: { email, role } },
+  })
+}
+
 /** Lists kept coupon codes (admin). */
 export function fetchCouponCodes() {
   return authFetch('/v1/coupon_codes')

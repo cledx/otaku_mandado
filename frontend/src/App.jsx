@@ -4,6 +4,7 @@ import AdminToolsPage from './components/AdminToolsPage'
 import AdminToolStubPage from './components/AdminToolStubPage'
 import ChangePasswordPage from './components/ChangePasswordPage'
 import CouponCodesPage from './components/CouponCodesPage'
+import CreateNewUserPage from './components/CreateNewUserPage'
 import ItemViewPage from './components/ItemViewPage'
 import LandingPage from './components/LandingPage'
 import OrdersPage from './components/OrdersPage'
@@ -28,6 +29,7 @@ import { parseAppRoute } from './utils/hashRoute'
  * - `#user-settings` → UserSettingsPage
  * - `#change-password` → ChangePasswordPage
  * - `#coupon-codes` → CouponCodesPage
+ * - `#create-new-user` → CreateNewUserPage
  * - `#scheduled-sales` / `#past-sales` / `#deleted-sales` / `#deleted-items` /
  *   `#past-orders` → AdminToolStubPage
  * - `#item-{saleId}-{itemId}` → ItemViewPage
@@ -69,6 +71,8 @@ function App() {
     page = <ChangePasswordPage />
   } else if (route.page === 'coupon-codes') {
     page = <CouponCodesPage />
+  } else if (route.page === 'create-new-user') {
+    page = <CreateNewUserPage />
   } else if (route.page === 'admin-tool-stub') {
     page = <AdminToolStubPage title={route.title} />
   } else {

@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 module V1
-  # Admin-only directory of every registered account, annotated with whether the
-  # user currently has any pending (kept) orders. Powers the View Accounts page.
+  # Admin-only account directory and provisioning.
+  # Index powers View Accounts; create powers the Create New User admin tool.
   class AccountsController < BaseController
     before_action :require_admin!
+
+    DEFAULT_PASSWORD = "password"
 
     def index
       pending_user_ids = Order.kept.where(status: "pending").distinct.pluck(:user_id).to_set
@@ -28,7 +30,30 @@ module V1
       render json: { data: accounts }
     end
 
+    def create
+      user = User.new(account_create_params)
+      user.password = DEFAULT_PASSWORD
+      user.password_confirmation = DEFAULT_PASSWORD
+
+      if user.save
+        render json: {
+          data: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            created_at: user.created_at
+          }
+        }, status: :created
+      else
+        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
     private
+
+    def account_create_params
+      params.require(:account).permit(:email, :role)
+    end
 
     def require_admin!
       return if current_user&.role == "admin"

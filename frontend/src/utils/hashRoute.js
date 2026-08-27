@@ -25,6 +25,7 @@ export function parseAppRoute() {
   if (hash === 'user-settings') return { page: 'user-settings' }
   if (hash === 'change-password') return { page: 'change-password' }
   if (hash === 'coupon-codes') return { page: 'coupon-codes' }
+  if (hash === 'create-new-user') return { page: 'create-new-user' }
   if (Object.hasOwn(ADMIN_TOOL_ROUTES, hash)) {
     return { page: 'admin-tool-stub', title: ADMIN_TOOL_ROUTES[hash] }
   }

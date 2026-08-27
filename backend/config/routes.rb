@@ -38,7 +38,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :accounts, only: %i[index] # admin only (see AccountsController)
+    resources :accounts, only: %i[index create] # admin only (see AccountsController)
 
     resources :coupon_codes, only: %i[index create update destroy] # admin only (see CouponCodesController)
   end

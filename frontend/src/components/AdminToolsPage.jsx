@@ -32,6 +32,11 @@ const ADMIN_TOOLS = [
     description: 'Create and manage coupon codes',
   },
   {
+    to: '#create-new-user',
+    text: 'Create New User',
+    description: 'Provision a new User or Admin account',
+  },
+  {
     to: '#past-orders',
     text: 'Past Orders',
     description: 'Show all completed orders',
